@@ -207,16 +207,16 @@ for ip=1:numel(job.subj)
     
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv);
     if isfield(job.subj(ip).output,'indir') && job.subj(ip).output.indir == 1
-        cwd = fileparts(TE_t1w);
+        cwd = fileparts(P_mtw(1,:));
     else
         cwd=job.subj(ip).output.outdir{1};
+        movefile(fR1,cwd);
+        movefile(fR2s,cwd);
+        movefile(fMT,cwd);
+        movefile(fA,cwd);
+        movefile(PPDw,cwd);
+        movefile(PT1w,cwd);
     end
-    movefile(fR1,cwd);
-    movefile(fR2s,cwd);
-    movefile(fMT,cwd);
-    movefile(fA,cwd);
-    movefile(PPDw,cwd);
-    movefile(PT1w,cwd);
     
     out_loc.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out_loc.subj(ip).R2s={fullfile(cwd,spm_str_manip(fR2s,'t'))};
