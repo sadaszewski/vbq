@@ -55,6 +55,11 @@ fa_t1w = p(1).fa;
 
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w);
 
+if isfield(job.subj(ip).raws.pdmask_choice, 'pdmask_thresh')
+    pdmask_thresh = job.subj(ip).raws.pdmask_choice.pdmask_thresh;
+    spm_mask({PPDw}, {fR1, fR2s, fMT, fA}, pdmask_thresh);
+end
+
 % Use default parameters of SPM8 "New Segment" toolbox except for
 % adapted regularization and smoothness of bias field
 % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)

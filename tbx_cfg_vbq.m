@@ -44,13 +44,48 @@ raws1.filter    = 'image';
 raws1.ufilter   = '.*';
 raws1.num       = [1 Inf];
 % ---------------------------------------------------------------------
+% const no_pdmask
+% ---------------------------------------------------------------------
+no_pdmask  = cfg_const;
+no_pdmask.tag = 'no_pdmask';
+no_pdmask.name = 'No';
+no_pdmask.help = {'Maps will not be masked with PD maps.'};
+no_pdmask.val = {0};
+% ---------------------------------------------------------------------
+% entry pdmask_thresh
+% ---------------------------------------------------------------------
+pdmask_thresh = cfg_entry;
+pdmask_thresh.tag = 'pdmask_thresh';
+pdmask_thresh.name = 'Binarization threshold';
+pdmask_thresh.help = {'PD maps will be binarized using this threshold.'};
+pdmask_thresh.strtype = 'e';
+pdmask_thresh.num = [1 1];
+pdmask_thresh.val = {10};
+% ---------------------------------------------------------------------
+% branch pdmask_thresh
+% ---------------------------------------------------------------------
+pdmask = cfg_branch;
+pdmask.tag = 'pdmask';
+pdmask.name = 'Yes';
+pdmask.help = {'Maps will be masked with PD maps.'};
+pdmask.val = {pdmask_thresh};
+% ---------------------------------------------------------------------
+% choice pdmask_choice
+% ---------------------------------------------------------------------
+pdmask_choice          = cfg_choice;
+pdmask_choice.tag      = 'pdmask_choice';
+pdmask_choice.name     = 'Mask output maps with PD maps';
+pdmask_choice.help     = {'All output maps will be masked using PD maps if Yes is selected.'};
+pdmask_choice.values   = {pdmask no_pdmask};
+pdmask_choice.val      = {no_pdmask};
+% ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
 raws            = cfg_branch;
 raws.tag        = 'raw_mpm';
 raws.name       = 'Raw multiparameter data';
 raws.help       = {'Input all the MT/PD/T1 images in this order.'}; 
-raws.val        = {raws1 raws2 raws3 };
+raws.val        = {raws1 raws2 raws3 pdmask_choice};
 % ---------------------------------------------------------------------
 % menu type_b1
 % ---------------------------------------------------------------------
@@ -148,7 +183,7 @@ output.values  = {indir outdir };
 create1         = cfg_exbranch;
 create1.tag     = 'mp_img_b_img';
 create1.name    = 'Multiparameter & B0/B1 images';
-raws.val        = {raws1 raws2 raws3 };
+raws.val        = {raws1 raws2 raws3 pdmask_choice};
 braws.val       = {braws1 braws2 };
 subj.val        = {output braws raws };
 sdata.val       = {subj };
@@ -164,7 +199,7 @@ create1.vout    = @vout_crt1;
 create          = cfg_exbranch;
 create.tag      = 'mp_img_unicort';
 create.name     = 'Multiparameter & UNICORT_B1 images';
-raws.val        = {raws1 raws2 raws3 };
+raws.val        = {raws1 raws2 raws3 pdmask_choice};
 subj.val        = {output raws };
 sdata.val       = {subj };
 sdata.values    = {subj };
