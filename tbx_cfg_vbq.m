@@ -56,11 +56,31 @@ no_pdmask.val = {0};
 % ---------------------------------------------------------------------
 pdmask_thresh = cfg_entry;
 pdmask_thresh.tag = 'pdmask_thresh';
-pdmask_thresh.name = 'Binarization threshold';
+pdmask_thresh.name = 'Binarization threshold (fraction of range)';
 pdmask_thresh.help = {'PD maps will be binarized using this threshold.'};
 pdmask_thresh.strtype = 'e';
 pdmask_thresh.num = [1 1];
-pdmask_thresh.val = {10};
+pdmask_thresh.val = {0.1};
+% ---------------------------------------------------------------------
+% entry pdmask_erosions
+% ---------------------------------------------------------------------
+pdmask_erosions = cfg_entry;
+pdmask_erosions.tag = 'pdmask_erosions';
+pdmask_erosions.name = 'Size of erosions';
+pdmask_erosions.help = {'Size of erosions'};
+pdmask_erosions.strtype = 'e';
+pdmask_erosions.num = [1 5];
+pdmask_erosions.val = {[7 5 0 0 0]};
+% ---------------------------------------------------------------------
+% entry pdmask_dilations
+% ---------------------------------------------------------------------
+pdmask_dilations = cfg_entry;
+pdmask_dilations.tag = 'pdmask_dilations';
+pdmask_dilations.name = 'Size of dilations';
+pdmask_dilations.help = {'Size of dilations'};
+pdmask_dilations.strtype = 'e';
+pdmask_dilations.num = [1 5];
+pdmask_dilations.val = {[7 5 0 0 0]};
 % ---------------------------------------------------------------------
 % branch pdmask_thresh
 % ---------------------------------------------------------------------
@@ -68,7 +88,7 @@ pdmask = cfg_branch;
 pdmask.tag = 'pdmask';
 pdmask.name = 'Yes';
 pdmask.help = {'Maps will be masked with PD maps.'};
-pdmask.val = {pdmask_thresh};
+pdmask.val = {pdmask_thresh pdmask_erosions pdmask_dilations};
 % ---------------------------------------------------------------------
 % choice pdmask_choice
 % ---------------------------------------------------------------------
