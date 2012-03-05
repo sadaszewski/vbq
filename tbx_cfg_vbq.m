@@ -70,7 +70,7 @@ pdmask_erosions.name = 'Size of erosions';
 pdmask_erosions.help = {'Size of erosions'};
 pdmask_erosions.strtype = 'e';
 pdmask_erosions.num = [1 5];
-pdmask_erosions.val = {[7 5 0 0 0]};
+pdmask_erosions.val = {[5 5 0 0 0]};
 % ---------------------------------------------------------------------
 % entry pdmask_dilations
 % ---------------------------------------------------------------------
@@ -80,7 +80,7 @@ pdmask_dilations.name = 'Size of dilations';
 pdmask_dilations.help = {'Size of dilations'};
 pdmask_dilations.strtype = 'e';
 pdmask_dilations.num = [1 5];
-pdmask_dilations.val = {[7 5 0 0 0]};
+pdmask_dilations.val = {[7 5 3 0 0]};
 % ---------------------------------------------------------------------
 % branch pdmask_thresh
 % ---------------------------------------------------------------------
