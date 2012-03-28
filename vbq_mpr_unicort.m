@@ -31,6 +31,8 @@ function out=vbq_mpr_unicort(job)
 
 % $Id: vbq_mpr_unicort.m 265 2011-08-01 10:58:48Z nikolaus $
 
+%%
+job=vbq_auto_pipeline(job);
 
 %%
 for ip=1:numel(job.subj)

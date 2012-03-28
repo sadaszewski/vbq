@@ -19,6 +19,8 @@ function out=vbq_mpr_b0_b1(job)
 
 % $Id: vbq_mpr_b0_b1.m 265 2011-08-01 10:58:48Z nikolaus $
 
+job=vbq_auto_pipeline(job);
+
 for in=1:numel(job.subj)
     local_job.subj=job.subj(in);
     out_temp=vbq_mpr_b0_b1_local(local_job,job.b1_type);

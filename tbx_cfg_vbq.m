@@ -14,6 +14,107 @@ function vbq = tbx_cfg_vbq
 if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','VBQ')); end
 
 % ---------------------------------------------------------------------
+% auto_pipeline_no Automatic Pipeline Setup NO
+% ---------------------------------------------------------------------
+auto_pipeline_no  = cfg_const;
+auto_pipeline_no.tag = 'auto_pipeline_no';
+auto_pipeline_no.name = 'No';
+auto_pipeline_no.help = {'Do NOT use automatic pipeline.'};
+auto_pipeline_no.val = {0};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup Dir
+% ---------------------------------------------------------------------
+auto_pipeline_dir         = cfg_files;
+auto_pipeline_dir.tag     = 'auto_pipeline_dir';
+auto_pipeline_dir.name    = 'Pipeline input directory';
+auto_pipeline_dir.help    = {'Select a directory for automatic pipeline input.'};
+auto_pipeline_dir.filter = 'dir';
+auto_pipeline_dir.ufilter = '.*';
+auto_pipeline_dir.num     = [1 1];
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup Unpack
+% ---------------------------------------------------------------------
+auto_pipeline_unpack         = cfg_menu;
+auto_pipeline_unpack.tag     = 'auto_pipeline_unpack';
+auto_pipeline_unpack.name    = 'Unpack .tar archives';
+auto_pipeline_unpack.help    = {'If Yes is selected, .tar archives will be unpacked and deleted prior to listing DICOM files.'};
+auto_pipeline_unpack.labels  = {
+                'Yes'
+                'No'
+                }';
+auto_pipeline_unpack.values = {
+                1
+                0
+                }';
+auto_pipeline_unpack.val    = {0};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup MT
+% ---------------------------------------------------------------------
+auto_pipeline_mt = cfg_entry;
+auto_pipeline_mt.tag = 'auto_pipeline_mt';
+auto_pipeline_mt.name = 'MT sequence name (regular expression)';
+auto_pipeline_mt.help = {'This regular expression will be used to identify MT sequences.'};
+auto_pipeline_mt.strtype = 's';
+auto_pipeline_mt.num = [1 Inf];
+auto_pipeline_mt.val = {'mt_'};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup PD
+% ---------------------------------------------------------------------
+auto_pipeline_pd = cfg_entry;
+auto_pipeline_pd.tag = 'auto_pipeline_pd';
+auto_pipeline_pd.name = 'PD sequence name (regular expression)';
+auto_pipeline_pd.help = {'This regular expression will be used to identify PD sequences.'};
+auto_pipeline_pd.strtype = 's';
+auto_pipeline_pd.num = [1 Inf];
+auto_pipeline_pd.val = {'pd_'};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup T1
+% ---------------------------------------------------------------------
+auto_pipeline_t1 = cfg_entry;
+auto_pipeline_t1.tag = 'auto_pipeline_t1';
+auto_pipeline_t1.name = 'T1 sequence name (regular expression)';
+auto_pipeline_t1.help = {'This regular expression will be used to identify T1 sequences.'};
+auto_pipeline_t1.strtype = 's';
+auto_pipeline_t1.num = [1 Inf];
+auto_pipeline_t1.val = {'t1_'};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup B0
+% ---------------------------------------------------------------------
+auto_pipeline_b0 = cfg_entry;
+auto_pipeline_b0.tag = 'auto_pipeline_b0';
+auto_pipeline_b0.name = 'B0 sequence name (regular expression)';
+auto_pipeline_b0.help = {'This regular expression will be used to identify B0 sequences.'};
+auto_pipeline_b0.strtype = 's';
+auto_pipeline_b0.num = [1 Inf];
+auto_pipeline_b0.val = {'field'};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup B1
+% ---------------------------------------------------------------------
+auto_pipeline_b1 = cfg_entry;
+auto_pipeline_b1.tag = 'auto_pipeline_b1';
+auto_pipeline_b1.name = 'B1 sequence name (regular expression)';
+auto_pipeline_b1.help = {'This regular expression will be used to identify B1 sequences.'};
+auto_pipeline_b1.strtype = 's';
+auto_pipeline_b1.num = [1 Inf];
+auto_pipeline_b1.val = {'B1'};
+% ---------------------------------------------------------------------
+% auto_pipeline_yes Automatic Pipeline Setup YES
+% ---------------------------------------------------------------------
+auto_pipeline_yes = cfg_branch;
+auto_pipeline_yes.tag = 'auto_pipeline_yes';
+auto_pipeline_yes.name = 'Yes';
+auto_pipeline_yes.help = {'Use automatic pipeline.'};
+auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
+% ---------------------------------------------------------------------
+% auto_pipeline Automatic Pipeline Setup
+% ---------------------------------------------------------------------
+auto_pipeline          = cfg_choice;
+auto_pipeline.tag      = 'auto_pipeline';
+auto_pipeline.name     = 'Create subject entries automatically from DICOM files.';
+auto_pipeline.help     = {'DICOM files in the selected directory will be listed recursively and appropriate job subject entries created automatically. Do NOT delete first subject, just leave the image input fields empty. This subject''s settings will be copied for all subjects.'};
+auto_pipeline.values   = {auto_pipeline_yes auto_pipeline_no};
+auto_pipeline.val      = {auto_pipeline_no};
+% ---------------------------------------------------------------------
 % raws Raw Images
 % ---------------------------------------------------------------------
 raws3           = cfg_files;
@@ -22,7 +123,8 @@ raws3.name      = 'T1 images';
 raws3.help      = {'Input T1 images in the same order.'}; 
 raws3.filter    = 'image';
 raws3.ufilter   = '.*';
-raws3.num       = [1 Inf];
+raws3.num       = [0 Inf];
+raws3.val       = {''};
 % ---------------------------------------------------------------------
 % raws Raw Images
 % ---------------------------------------------------------------------
@@ -32,7 +134,8 @@ raws2.name      = 'PD images';
 raws2.help      = {'Input PD images in the same order.'}; 
 raws2.filter    = 'image';
 raws2.ufilter   = '.*';
-raws2.num       = [1 Inf];
+raws2.num       = [0 Inf];
+raws2.val       = {''};
 % ---------------------------------------------------------------------
 % raws Raw Images
 % ---------------------------------------------------------------------
@@ -42,7 +145,8 @@ raws1.name      = 'MT images';
 raws1.help      = {'Input MT images in the same order.'}; 
 raws1.filter    = 'image';
 raws1.ufilter   = '.*';
-raws1.num       = [1 Inf];
+raws1.num       = [0 Inf];
+raws1.val       = {''};
 % ---------------------------------------------------------------------
 % const no_pdmask
 % ---------------------------------------------------------------------
@@ -133,7 +237,8 @@ braws2.name     = 'Pairs of SE and STE images';
 braws2.help     = {'Select B1 images - 3D EPI SE & STE'}; 
 braws2.filter   = 'image';
 braws2.ufilter  = '.*';
-braws2.num      = [1 22];
+braws2.num      = [0 22];
+braws2.val      = {''};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -143,7 +248,8 @@ braws1.name     = 'B0 images';
 braws1.help     = {'Select B0 images'}; 
 braws1.filter   = 'image';
 braws1.ufilter  = '.*';
-braws1.num      = [1 3];
+braws1.num      = [0 3];
+braws1.val      = {''};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -179,6 +285,7 @@ indir.name    = 'Input directory';
 indir.help    = {'Output files will be written to the same folder as each corresponding input file.'};
 indir.labels = {'Yes'};
 indir.values = {1};
+indir.val = {1};
 % ---------------------------------------------------------------------
 % outdir Output directory
 % ---------------------------------------------------------------------
@@ -197,6 +304,7 @@ output.tag     = 'output';
 output.name    = 'Output choice';
 output.help    = {'Output directory can be the same as the input directory for each input file or user selected'};
 output.values  = {indir outdir };
+output.val = {indir};
 % ---------------------------------------------------------------------
 % create1 Create MPR maps with B0/B1 maps
 % ---------------------------------------------------------------------
@@ -208,7 +316,7 @@ braws.val       = {braws1 braws2 };
 subj.val        = {output braws raws };
 sdata.val       = {subj };
 sdata.values    = {subj };
-create1.val     = {b1_type sdata };
+create1.val     = {auto_pipeline b1_type sdata };
 %create1.check   = @check_maps_b0_b1;
 create1.help    = {'Use this option when B0/B1 3D maps available.'};
 create1.prog    = @vbq_mpr_b0_b1;
@@ -223,7 +331,7 @@ raws.val        = {raws1 raws2 raws3 pdmask_choice};
 subj.val        = {output raws };
 sdata.val       = {subj };
 sdata.values    = {subj };
-create.val      = {sdata };
+create.val      = {auto_pipeline sdata };
 %create.check    = @check_maps_unicort;
 create.help     = {'Use this option when B0/B1 3D maps not available. Bias field estimation and correction will be performed',...
     'using the approach described in ''Unified segmentation based correction... (UNICORT) paper by Weiskopf et al., 2011 '};
