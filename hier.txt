@@ -1,0 +1,4 @@
+PatientID
+StudyDate
+ProtocolName
+SeriesNumber

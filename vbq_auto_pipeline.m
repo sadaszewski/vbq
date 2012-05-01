@@ -2,29 +2,47 @@ function job=vbq_auto_pipeline(job)
     if ~isfield(job.auto_pipeline, 'auto_pipeline_yes')
         return
     end
+    
+    javaclasspath(fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar'));
 
     D = char(job.auto_pipeline.auto_pipeline_yes.auto_pipeline_dir);
     U = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_unpack;
-    files = list_files_rec(D);
+    H = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_hierarchy;
     
     if U
+        files = list_files_rec(D);
         for i=1:numel(files)
             if ~isempty(regexp(files{i}, '.tar$', 'match'))
                 untar(files{i}, fileparts(files{i}));
                 spm_unlink(files{i});
             end
         end
+    end
+    
+    if H
         files = list_files_rec(D);
+        f = fopen(fullfile(D, 'vbq_files.txt'), 'w');
+        for i=1:numel(files)
+            fwrite(f, [files{i} '\n']);
+        end
+        fclose(f);
+        args = {};
+        args{1} = fullfile(spm('dir'), 'toolbox', 'vbq', 'attr.txt');
+        args{2} = fullfile(spm('dir'), 'toolbox', 'vbq', 'hier.txt');
+        args{3} = D;
+        args{4} = '1';
+        args{5} = fullfile(D, 'vbq_files.txt');
+        anon = ch.chuv.dicomymizer.Anonymizer();
+        anon.main(args);
+        % hdr = spm_dicom_headers(char(files), 1);
+        % cd(D);
+        % spm_dicom_convert(hdr, 'all', 'patid_date', 'nii');
+        % for i=1:numel(hdr)
+            % spm_unlink(hdr{i}.Filename)
+        % end
+        
+        remove_empty_dir(D);
     end
-    
-    hdr = spm_dicom_headers(char(files), 1);
-    cd(D);
-    spm_dicom_convert(hdr, 'all', 'patid_date', 'nii');
-    for i=1:numel(hdr)
-        spm_unlink(hdr{i}.Filename)
-    end
-    
-    remove_empty_dir(D);
     
     subj_count = 0;
     subj_orig = job.subj(1);
@@ -35,41 +53,70 @@ function job=vbq_auto_pipeline(job)
         for k=3:numel(stud)
             P = fullfile(D, pat(i).name, stud(k).name);
             seq = dir(P);
+            
+            for m=3:numel(seq)
+                P2 = fullfile(P, seq(m).name);
+                ser = dir(P2);
+                for n=3:numel(ser)
+                    P3 = fullfile(P2, ser(n).name);
+                    hdr = spm_dicom_headers(char(list_files_rec(P3)), 1);
+                    old_dir = pwd;
+                    cd(P3);
+                    spm_dicom_convert(hdr, 'all', 'flat', 'nii');
+                    cd(old_dir);
+                    for o=1:numel(hdr)
+                        spm_unlink(hdr{o}.Filename);
+                    end
+                end
+            end
+            
             seq_names = {seq.name};
             
-            subj.raw_mpm.MT = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_mt)));
-            subj.raw_mpm.PD = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_pd)));
-            subj.raw_mpm.T1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_t1)));
+            subj.raw_mpm.MT = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_mt)), 1);
+            subj.raw_mpm.PD = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_pd)), 1);
+            subj.raw_mpm.T1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_t1)), 1);
             
             if isfield(subj, 'raw_fld')
                 subj.raw_fld.b1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b1)));
                 subj.raw_fld.b0 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0)));
             end
         end
-        subj_count = subj_count + 1;
-        job.subj(subj_count) = subj;
+        
+        if ~isempty(subj.raw_mpm.MT) && ~isempty(subj.raw_mpm.PD) && ~isempty(subj.raw_mpm.T1) && (~isfield(subj, 'raw_fld') || (~isempty(subj.raw_fld.b1) && ~isempty(subj.raw_fld.b0)))        
+            subj_count = subj_count + 1;
+            job.subj(subj_count) = subj;
+        else
+            disp(['Missing images for ' pat(i).name]);
+        end
     end
     
-    function F = list_files_rec(D)
+    function F = list_files_rec(D, num_dir)
+        if ~exist('num_dir', 'var')
+            num_dir = Inf;
+        end
+        cnt_dir = num_dir;
         F = {};
         if iscell(D) && numel(D)>1
             for j=1:numel(D)
-                F = [F; list_files_rec(D{j})]; %#ok<AGROW>
+                F = [F; list_files_rec(D{j}, num_dir)]; %#ok<AGROW>
             end
             return
         end
         D = char(D);
         x = dir(D);
+        [~, idx] = sort({x.name});
+        x=x(idx);
         count = 0;
         for j=3:numel(x)
             if ~x(j).isdir
                 count = count + 1;
-                F{count} = fullfile(D, x(j).name); %#ok<AGROW>
+                F{count,1} = fullfile(D, x(j).name); %#ok<AGROW>
             end
         end
         for j=3:numel(x)
-            if x(j).isdir
-                F = [F; list_files_rec(fullfile(D, x(j).name))]; %#ok<AGROW>
+            if x(j).isdir && cnt_dir>0
+                cnt_dir = cnt_dir - 1;
+                F = [F; list_files_rec(fullfile(D, x(j).name), num_dir)]; %#ok<AGROW>
             end
         end
     end
@@ -99,10 +146,19 @@ function job=vbq_auto_pipeline(job)
                 S{count} = A{j}; %#ok<AGROW>
             end
         end
+        S=sort(S);
+        if ~isempty(S)
+            S=S{1};
+        else
+            S='null';
+        end
     end
 
     function M = multi_fullfile(P, F)
         M = {};
+        if ~iscell(F)
+            F = {F};
+        end
         for j=1:numel(F)
             M{j} = fullfile(P, F{j}); %#ok<AGROW>
         end

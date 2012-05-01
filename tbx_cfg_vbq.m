@@ -98,13 +98,29 @@ auto_pipeline_b1.strtype = 's';
 auto_pipeline_b1.num = [1 Inf];
 auto_pipeline_b1.val = {'B1'};
 % ---------------------------------------------------------------------
+% auto_pipeline_hierarchy Automatic Pipeline Setup Unpack
+% ---------------------------------------------------------------------
+auto_pipeline_hierarchy         = cfg_menu;
+auto_pipeline_hierarchy.tag     = 'auto_pipeline_hierarchy';
+auto_pipeline_hierarchy.name    = 'Create PatientName/StudyDate/ProtocolName/ProtocolSeries hierarchy';
+auto_pipeline_hierarchy.help    = {'If Yes is selected, the abovementioned hierarchy will be created.'};
+auto_pipeline_hierarchy.labels  = {
+                'Yes'
+                'No'
+                }';
+auto_pipeline_hierarchy.values = {
+                1
+                0
+                }';
+auto_pipeline_hierarchy.val    = {0};
+% ---------------------------------------------------------------------
 % auto_pipeline_yes Automatic Pipeline Setup YES
 % ---------------------------------------------------------------------
 auto_pipeline_yes = cfg_branch;
 auto_pipeline_yes.tag = 'auto_pipeline_yes';
 auto_pipeline_yes.name = 'Yes';
 auto_pipeline_yes.help = {'Use automatic pipeline.'};
-auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
+auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_hierarchy auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
 % ---------------------------------------------------------------------
 % auto_pipeline Automatic Pipeline Setup
 % ---------------------------------------------------------------------

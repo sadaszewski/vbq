@@ -22,6 +22,7 @@ function [fMask] = vbq_prep_pd_mask(fPDw, spec)
         
     v = spm_vol(fPDw);
     dat = spm_read_vols(v);
+    % dat = ls_imfilter(dat, fspecial3('gaussian', 3));
     range = max(max(max(dat))) - min(min(min(dat)));
     t = min(min(min(dat))) + spec.pdmask_thresh * range;
     dat = (dat >= t);
