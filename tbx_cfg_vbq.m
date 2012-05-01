@@ -11,7 +11,7 @@ function vbq = tbx_cfg_vbq
 
 % $Id: tbx_cfg_vbq.m 265 2011-08-01 10:58:48Z nikolaus $
 
-if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','VBQ')); end
+if ~isdeployed, addpath(fullfile(spm('dir'),'toolbox','vbq')); end
 
 % ---------------------------------------------------------------------
 % auto_pipeline_no Automatic Pipeline Setup NO
