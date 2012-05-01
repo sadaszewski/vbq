@@ -103,7 +103,7 @@ auto_pipeline_b1.val = {'B1'};
 auto_pipeline_hierarchy         = cfg_menu;
 auto_pipeline_hierarchy.tag     = 'auto_pipeline_hierarchy';
 auto_pipeline_hierarchy.name    = 'Create hierarchy';
-auto_pipeline_hierarchy.help    = {'If Yes is selected, the aPatientName/StudyDate/ProtocolName/SeriesNumber hierarchy will be created.'};
+auto_pipeline_hierarchy.help    = {'If Yes is selected, the PatientName/StudyDate/ProtocolName/SeriesNumber hierarchy will be created.'};
 auto_pipeline_hierarchy.labels  = {
                 'Yes'
                 'No'
