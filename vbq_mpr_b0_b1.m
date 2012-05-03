@@ -209,9 +209,9 @@ for ip=1:numel(job.subj)
     
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv);
     
-    if isfield(job.subj(ip).raws.pdmask_choice, 'pdmask_thresh')
-        job.subj(ip).raws.pdmask_choice.pdmask_thresh;
-        fMask = vbq_prep_pd_mask(PPDw, job.subj(ip).raws.pdmask_choice);
+    if isfield(job.subj(ip).raw_mpm.pdmask_choice, 'pdmask_thresh')
+        % job.subj(ip).raw_mpm.pdmask_choice.pdmask_thresh;
+        fMask = vbq_prep_pd_mask(PPDw, job.subj(ip).raw_mpm.pdmask_choice);
         spm_mask({fMask}, {fR1, fR2s, fMT, fA}, 0);
     end
     
