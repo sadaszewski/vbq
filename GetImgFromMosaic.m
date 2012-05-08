@@ -6,15 +6,22 @@ filename = '';
 DICOM_filename = getFirstDicomInfolder( ENCLOSING_path );
 NEchoes = 1;
 
+[~, ~, ext] = fileparts(DICOM_filename);
+if strcmp(ext, '.nii')
+    % Ignore if Nifti is already there
+    return
+end
+
 % Extract Dicom Header
 info_first = spm_dicom_headers(DICOM_filename);
+info_first = info_first{1};
 
 if ~isfield(info_first, 'CSAImageHeaderInfo')
     error('CSAImageHeaderInfo tag is missing. Are you sure your scans are in MOSAIC format?');
 end
 
 num_imag_in_mosaic = get_numaris4_val(info_first.CSAImageHeaderInfo, 'NumberOfImagesInMosaic');
-if isempty(num_imag_in_mosaic.item)
+if isempty(num_imag_in_mosaic)
     % Not a real mosaic, it should be fine to leave it alone
     return
 end
@@ -33,7 +40,7 @@ if ~exist('dicomread', 'file')
 end
 
 fid = fopen(Header_textFile, 'w');
-fwrite(fid, phoenix.item(1).val);
+fwrite(fid, phoenix);
 fclose(fid);
 
 % Open Dicom header of the first Dicom image
@@ -81,10 +88,10 @@ end
 %% ======================
 Num = sqrt(double(NEchoes));
 EchoPerRow = round(Num);
-H = info_first.Height/EchoPerRow; W = info_first.Width/EchoPerRow;
+H = info_first.Rows/EchoPerRow; W = info_first.Columns/EchoPerRow;
 
 D = dir( ENCLOSING_path );
-Path = fullfile(ENCLOSING_path, 'Echoes');
+Path = ENCLOSING_path; % fullfile(ENCLOSING_path, 'Echoes');
 mkdir(Path);
 
 it = 1; % iterator to give consecutive numbers to each echo image
