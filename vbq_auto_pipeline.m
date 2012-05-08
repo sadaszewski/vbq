@@ -60,13 +60,21 @@ function job=vbq_auto_pipeline(job)
                 ser = dir(P2);
                 for n=3:numel(ser)
                     P3 = fullfile(P2, ser(n).name);
-                    hdr = spm_dicom_headers(char(list_files_rec(P3)), 1);
-                    old_dir = pwd;
-                    cd(P3);
-                    spm_dicom_convert(hdr, 'all', 'flat', 'nii');
-                    cd(old_dir);
-                    for o=1:numel(hdr)
-                        spm_unlink(hdr{o}.Filename);
+                    
+                    mosaic_result = '';
+                    if job.auto_pipeline.auto_pipeline_yes.auto_pipeline_mosaic
+                        mosaic_result = process_mosaic(P3);
+                    end
+                            
+                    if isempty(mosaic_result)
+                        hdr = spm_dicom_headers(char(list_files_rec(P3)), 1);
+                        old_dir = pwd;
+                        cd(P3);
+                        spm_dicom_convert(hdr, 'all', 'flat', 'nii');
+                        cd(old_dir);
+                        for o=1:numel(hdr)
+                            spm_unlink(hdr{o}.Filename);
+                        end
                     end
                 end
             end
@@ -163,5 +171,21 @@ function job=vbq_auto_pipeline(job)
         for j=1:numel(F)
             M{j} = fullfile(P, F{j}); %#ok<AGROW>
         end
+    end
+
+    function process_mosaic(path)
+        GetImgFromMosaic(path);
+        x=dir(fullfile(path, 'Echo*'));
+        oldwd = pwd;
+        cd(path);
+        for j=1:size(x,1)
+            y = dir(fullfile(path, x(j).name));
+            hdrs = spm_dicom_headers({y(3:end).name});
+            spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
+            for o1=1:numel(hdrs)
+                spm_unlink(hdrs{o1}.Filename);
+            end
+        end
+        cd(oldwd);
     end
 end

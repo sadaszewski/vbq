@@ -32,7 +32,7 @@ auto_pipeline_dir.filter = 'dir';
 auto_pipeline_dir.ufilter = '.*';
 auto_pipeline_dir.num     = [1 1];
 % ---------------------------------------------------------------------
-% auto_pipeline_yes Automatic Pipeline Setup Unpack
+% auto_pipeline_unpack Automatic Pipeline Setup Unpack
 % ---------------------------------------------------------------------
 auto_pipeline_unpack         = cfg_menu;
 auto_pipeline_unpack.tag     = 'auto_pipeline_unpack';
@@ -47,6 +47,22 @@ auto_pipeline_unpack.values = {
                 0
                 }';
 auto_pipeline_unpack.val    = {0};
+% ---------------------------------------------------------------------
+% auto_pipeline_mosaic Automatic Mosaic Processing
+% ---------------------------------------------------------------------
+auto_pipeline_mosaic         = cfg_menu;
+auto_pipeline_mosaic.tag     = 'auto_pipeline_mosaic';
+auto_pipeline_mosaic.name    = 'Process MOSAIC images';
+auto_pipeline_mosaic.help    = {'If you have DICOM images in MOSAIC format, you have to select YES here in order to extract separate echo images from the mosaic. At the moment, Image Processing Toolbox is required for this functionality to work!!!'};
+auto_pipeline_mosaic.labels  = {
+                'Yes'
+                'No'
+                }';
+auto_pipeline_mosaic.values = {
+                1
+                0
+                }';
+auto_pipeline_mosaic.val    = {0};
 % ---------------------------------------------------------------------
 % auto_pipeline_yes Automatic Pipeline Setup MT
 % ---------------------------------------------------------------------
@@ -120,7 +136,7 @@ auto_pipeline_yes = cfg_branch;
 auto_pipeline_yes.tag = 'auto_pipeline_yes';
 auto_pipeline_yes.name = 'Yes';
 auto_pipeline_yes.help = {'Use automatic pipeline.'};
-auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_hierarchy auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
+auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_hierarchy auto_pipeline_mosaic auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
 % ---------------------------------------------------------------------
 % auto_pipeline Automatic Pipeline Setup
 % ---------------------------------------------------------------------
