@@ -173,14 +173,14 @@ function job=vbq_auto_pipeline(job)
         end
     end
 
-    function process_mosaic(path)
-        GetImgFromMosaic(path);
+    function res = process_mosaic(path)
+        res = GetImgFromMosaic(path);
         x=dir(fullfile(path, 'Echo*'));
         oldwd = pwd;
         cd(path);
         for j=1:size(x,1)
             y = dir(fullfile(path, x(j).name));
-            hdrs = spm_dicom_headers({y(3:end).name});
+            hdrs = spm_dicom_headers(char(y(3:end).name));
             spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
             for o1=1:numel(hdrs)
                 spm_unlink(hdrs{o1}.Filename);
