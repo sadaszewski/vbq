@@ -71,12 +71,14 @@ function job=vbq_auto_pipeline(job)
                         old_dir = pwd;
                         cd(P3);
                         % spm_dicom_convert(hdr, 'all', 'flat', 'nii');
-                        local_dicom_convert(files);
+                        status = local_dicom_convert(files);
                         cd(old_dir);
                         % for o=1:numel(hdr)
                         for o=1:numel(files)
                             % delete(hdr{o}.Filename);
-                            delete(files{o});
+                            if (status{o} == 0) % Converted OK
+                                delete(files{o});
+                            end
                         end
                     end
                 end
@@ -187,16 +189,18 @@ function job=vbq_auto_pipeline(job)
             % hdrs = spm_dicom_headers([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
             % spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
             files1 = cellstr([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
-            local_dicom_convert(files1);
+            status1 = local_dicom_convert(files1);
             for o1=1:numel(files1)
                 % delete(hdrs{o1}.Filename);
-                delete(files1{o1}.Filename);
+                if (status1{o1} == 0) % Converted successfully
+                    delete(files1{o1}.Filename);
+                end
             end
         end
         cd(oldwd);
     end
 
-    function local_dicom_convert(filenames)
+    function status = local_dicom_convert(filenames)
         cpu = computer;
         if strcmp(cpu, 'PCWIN')
             exename = 'dcm2nii';
@@ -207,10 +211,15 @@ function job=vbq_auto_pipeline(job)
         else
             error('dcm2nii : unsupported architecture');
         end
-        exename = fullfile(spm('dir'), 'toolbox', 'vbq', exename);
+        exename = fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', exename);
+        status = cell(numel(filenames),1);
         for i1=1:numel(filenames)
-            cmd = [exename ' -o . "' filenames{i1} '"'];
-            system(cmd);
+            if isdicom(filenames{i1})
+                cmd = [exename ' -o . "' filenames{i1} '"'];
+                status{i1} = system(cmd);
+            else
+                status{i1} = 1;
+            end
         end
     end
 end
