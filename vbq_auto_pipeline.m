@@ -14,7 +14,7 @@ function job=vbq_auto_pipeline(job)
         for i=1:numel(files)
             if ~isempty(regexp(files{i}, '.tar$', 'match'))
                 untar(files{i}, fileparts(files{i}));
-                spm_unlink(files{i});
+                delete(files{i});
             end
         end
     end
@@ -72,7 +72,7 @@ function job=vbq_auto_pipeline(job)
                         spm_dicom_convert(hdr, 'all', 'flat', 'nii');
                         cd(old_dir);
                         for o=1:numel(hdr)
-                            spm_unlink(hdr{o}.Filename);
+                            delete(hdr{o}.Filename);
                         end
                     end
                 end
@@ -178,11 +178,12 @@ function job=vbq_auto_pipeline(job)
         oldwd = pwd;
         cd(path);
         for j=1:size(x,1)
-            y = dir(fullfile(path, x(j).name));
-            hdrs = spm_dicom_headers(char(y(3:end).name));
+    	    p = fullfile(path, x(j).name);
+            y = dir(p);
+            hdrs = spm_dicom_headers([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
             spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
             for o1=1:numel(hdrs)
-                spm_unlink(hdrs{o1}.Filename);
+                delete(hdrs{o1}.Filename);
             end
         end
         cd(oldwd);

@@ -1537,7 +1537,9 @@ for nm=1:length(job.subjc)
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_uni_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_uni_'),'(i1./i2).*(i3>0.05)');
         delfiles=strrep({p1,p2,m1,m2,n1,n2},'.nii,1','.nii');
-        spm_unlink(delfiles{:});
+        for ii=1:numel(delfiles)
+    	    delete(delfiles{ii});
+    	end
     end
     
 end
@@ -1782,7 +1784,9 @@ for nm=1:length(job.subjd)
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_dart_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_dart_'),'(i1./i2).*(i3>0.05)');
         delfiles=strrep({p1,p2,m1,m2,n1,n2},'.nii,1','.nii');
-        spm_unlink(delfiles{:});
+	for ii=1:numel(delfiles)
+            delete(delfiles{ii});
+        end
     end
 end
 %======================================================================
