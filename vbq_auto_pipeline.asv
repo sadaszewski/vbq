@@ -67,16 +67,12 @@ function job=vbq_auto_pipeline(job)
                             
                     if isempty(mosaic_result)
                         % hdr = spm_dicom_headers(char(list_files_rec(P3)), 1);
-                        files = list_files_rec(P3);
                         old_dir = pwd;
                         cd(P3);
                         % spm_dicom_convert(hdr, 'all', 'flat', 'nii');
-                        local_dicom_convert(files);
                         cd(old_dir);
-                        % for o=1:numel(hdr)
-                        for o=1:numel(files)
-                            % delete(hdr{o}.Filename);
-                            delete(files{o});
+                        for o=1:numel(hdr)
+                            delete(hdr{o}.Filename);
                         end
                     end
                 end
@@ -186,11 +182,9 @@ function job=vbq_auto_pipeline(job)
             y = dir(p);
             % hdrs = spm_dicom_headers([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
             % spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
-            files1 = cellstr([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
-            local_dicom_convert(files1);
-            for o1=1:numel(files1)
-                % delete(hdrs{o1}.Filename);
-                delete(files1{o1}.Filename);
+            local_dicom_convert(cellstr([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]));
+            for o1=1:numel(hdrs)
+                delete(hdrs{o1}.Filename);
             end
         end
         cd(oldwd);
