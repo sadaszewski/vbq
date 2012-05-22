@@ -55,6 +55,25 @@ tline = fgetl(fid);
 p = 0;
 inc = 0;
 
+
+% Find number of slices
+%% ======================
+Found = 0;
+
+while ischar(tline) && ~Found
+    tline = fgetl(fid);
+    
+    k = strfind(tline, 'sKSpace.lImagesPerSlab');
+    if ~isempty(k)
+          NSlices = sscanf(tline, 'sKSpace.lImagesPerSlab = %i' );
+          Found = 1;
+    end
+end
+
+fseek(fid, 0, -1);
+tline = fgetl(fid);
+
+
 % Find number of Echoes
 %% ======================
 while ischar(tline) && inc < NEchoes
@@ -89,7 +108,7 @@ end
 % Compute Number of Echoes per Row of the mosaic image
 %% ======================
 Num = sqrt(double(NEchoes));
-EchoPerRow = round(Num+.5);
+EchoPerRow = round(Num+.49);
 H = info_first.Rows/EchoPerRow; W = info_first.Columns/EchoPerRow;
 
 D = dir( ENCLOSING_path );
@@ -111,11 +130,15 @@ for j = 1:NEchoes
         filename = fullfile(ENCLOSING_path,D(i).name);
         I = dicomread(filename);
         info = dicominfo(filename);
-        info.InstanceNumber = it;
+        info.InstanceNumber =  info.InstanceNumber + (j-1)*NSlices;                                  %it;
         info.EchoTime = TE(j)*1e-3;
+        info.width = W; info.Height = H;
+        info.Rows = H; info.Columns = W;
+        info.WindowCenter = 0;
+        info.WindowWidth = 0;
         
         % Extract one echo image from th emosaic
-        X = mod((j-1)*W, EchoPerRow*W)+1; Y = floor(j/EchoPerRow)*H+1;
+        X = mod((j-1)*W, EchoPerRow*W)+1; Y = floor((j-1)/EchoPerRow)*H+1;
         I2 = imcrop(I,[X Y W-1 H-1]);
         
         % Write Dicom image corresponding to each echo
