@@ -91,9 +91,16 @@ function job=vbq_auto_pipeline(job)
             subj.raw_mpm.PD = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_pd)), 1);
             subj.raw_mpm.T1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_t1)), 1);
             
+            check_count('MT', subj.raw_mpm.MT, 6);
+            check_count('PD', subj.raw_mpm.PD, 8);
+            check_count('T1', subj.raw_mpm.T1, 6);
+            
             if isfield(subj, 'raw_fld')
                 subj.raw_fld.b1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b1)));
                 subj.raw_fld.b0 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0)));
+                
+                check_count('B1', subj.raw_fld.b1, 22);
+                check_count('B0', subj.raw_fld.b0, 3);
             end
         end
         
@@ -102,6 +109,12 @@ function job=vbq_auto_pipeline(job)
             job.subj(subj_count) = subj;
         else
             disp(['Missing images for ' pat(i).name]);
+        end
+    end
+    
+    function check_count(name, list, expected)
+        if numel(list) ~= expected
+            error([num2str(numel(list)) ' instead of expected ' num2str(expected) ' in ' name]);
         end
     end
     
@@ -198,6 +211,10 @@ function job=vbq_auto_pipeline(job)
                 end
             end
         end
+        all_nii = dir('*.nii');
+        for j=1:numel(all_nii)
+            fix_origin(all_nii(j.name));
+        end
         cd(oldwd);
     end
 
@@ -222,5 +239,12 @@ function job=vbq_auto_pipeline(job)
                 status{i1} = 1;
             end
         end
+
+    function fix_origin(file)
+        image2set_hdr=spm_vol(file);
+        orig_mat = spm_get_space(file);
+        real_pos1 = orig_mat * [image2set_hdr.dim/2 1]';
+        mat = spm_matrix([-real_pos1(1), -real_pos1(2), -real_pos1(3), 0, 0, 0, 1, 1, 1]);
+        spm_get_space(file, mat * orig_mat);
     end
 end
