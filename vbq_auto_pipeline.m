@@ -29,12 +29,12 @@ function job=vbq_auto_pipeline(job)
         args = {};
         args{1} = fullfile(spm('dir'), 'toolbox', 'vbq', 'attr.txt');
         args{2} = fullfile(spm('dir'), 'toolbox', 'vbq', 'hier.txt');
-        args{3} = D;
+        args{3} = D(1:end-1);
         args{4} = '1';
         args{5} = fullfile(D, 'vbq_files.txt');
         % anon = ch.chuv.dicomymizer.Anonymizer();
         % anon.main(args);
-        system(['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -anon "' args{1} '" -hier "' args{2} '" -outdir "' args{3} ' -removeOriginals -files "' args{5} '"']);
+        system(['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -anon "' args{1} '" -hier "' args{2} '" -outdir "' args{3} '" -removeOriginals -files "' args{5} '"']);
         % hdr = spm_dicom_headers(char(files), 1);
         % cd(D);
         % spm_dicom_convert(hdr, 'all', 'patid_date', 'nii');
