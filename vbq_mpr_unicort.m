@@ -176,13 +176,14 @@ if isfield(job.subj(ip).output,'indir') && job.subj(ip).output.indir == 1
     cwd = p;
 else
     cwd=job.subj(ip).output.outdir{1};
-end
+
     movefile(fR1,cwd);
     movefile(fR2s,cwd);
     movefile(fMT,cwd);
     movefile(fA,cwd);
     movefile(PT1w,cwd);
     movefile(P_R1_unicort,cwd);
+end
     
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};
