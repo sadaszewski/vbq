@@ -1770,11 +1770,11 @@ for nm=1:length(job.subjd)
             error(chk)
         end
         p=spm_str_manip(job.subjd(nm).mp_vols{1},'h');
-        c1=insert_pref(job.subjd(nm).images{1},'smw');
-        c2=insert_pref(job.subjd(nm).images{2},'smw');
+        c1=insert_pref(job.subjd(nm).images{1},'mw');   % removed s
+        c2=insert_pref(job.subjd(nm).images{2},'mw');  % removed s
         m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',1'];
         m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',2'];
-        f =insert_pref(job.subjd(nm).mp_vols{i},'sw');
+        f =insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
         p1= spm_imcalc_ui(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)');
         p2= spm_imcalc_ui(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)');
         m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
