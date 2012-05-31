@@ -34,7 +34,7 @@ function job=vbq_auto_pipeline(job)
         args{5} = fullfile(D, 'vbq_files.txt');
         % anon = ch.chuv.dicomymizer.Anonymizer();
         % anon.main(args);
-        system(['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber -outdir "' args{3} '" -removeOriginals -files "' args{5} '"']);
+        system(['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesDescription -outdir "' args{3} '" -removeOriginals -files "' args{5} '"']);
         % hdr = spm_dicom_headers(char(files), 1);
         % cd(D);
         % spm_dicom_convert(hdr, 'all', 'patid_date', 'nii');
