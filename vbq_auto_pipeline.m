@@ -71,12 +71,20 @@ function job=vbq_auto_pipeline(job)
                         files = list_files_rec(P3);
                         old_dir = pwd;
                         cd(P3);
+<<<<<<< HEAD
                         % spm_dicom_convert(hdr, 'all', 'flat', 'nii');
                         status = local_dicom_convert(files);
+=======
+                        spm_dicom_convert(hdr, 'all', 'flat', 'nii');
+>>>>>>> 7f00b99ebdfef9e2edcbfbbcf8c6e79112da1a13
                         all_nii1 = dir('*.nii');
                         for jj=1:numel(all_nii1)
                             fix_origin(all_nii1(jj).name);
                         end
+<<<<<<< HEAD
+=======
+                        
+>>>>>>> 7f00b99ebdfef9e2edcbfbbcf8c6e79112da1a13
                         cd(old_dir);
                         % for o=1:numel(hdr)
                         for o=1:numel(files)
@@ -253,6 +261,7 @@ function job=vbq_auto_pipeline(job)
                 status{i1} = 1;
             end
         end
+    end
 
     function fix_origin(file)
         image2set_hdr=spm_vol(file);
