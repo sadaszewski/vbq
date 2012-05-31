@@ -63,124 +63,130 @@ for ip=1:numel(job.subj)
     %     P = spm_select(Inf,'image','Select images for B1 maps');
     %     Q = spm_select(Inf,'image','Select images for B0 map');
     % end
-    disp('----- Calculation of B1 map -----');
-    
-    V=spm_vol(P);
-    n   = numel(V);
-    Y_tmptmp   = zeros([V(1).dim(1:2) n]);
-    Y_ab = zeros(V(1).dim(1:3));
-    Y_cd = zeros(V(1).dim(1:3));
-    indexes=zeros(n/2,1);
-    Index_Matrix = zeros([V(1).dim(1:3) Nonominalvalues]);
-    real_Y_tmp   = zeros([V(1).dim(1:2) 2*Nonominalvalues]);
-    Y_tmp   = zeros([V(1).dim(1:2) 2*Nonominalvalues]);
-    
-    Temp_matrix   = zeros([V(1).dim(1:3) n/2]);
-    Ssq_matrix = zeros(V(1).dim(1:3));
-    
-    for i=1:n/2
-        Temp_matrix(:,:,:,i)=spm_read_vols(V(2*(i-1)+1));
-    end
-    Ssq_matrix=sqrt(sum(Temp_matrix.^2,4));
-    
-    %-Start progress plot
-    %-----------------------------------------------------------------------
-    spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
-    
-    %-Loop over planes computing result Y
-    %-----------------------------------------------------------------------
-    clear Temp_mat;
-    corr_fact = exp(TM/T1);
-    for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
-        B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
-        
-        for i = 1:n/2
-            M = inv(B*inv(V(1).mat)*V(1).mat);
-            Y_tmptmp(:,:,((i-1)*2+1))  = real(acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0)./(spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+eps))/pi*180/beta(i)); % nearest neighbor interpolation
-            Y_tmptmp(:,:,((i-1)*2+2))  = 180/beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
-            Temp_mat(:,:,i)=spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0);
+    [path name ext] = fileparts(job.subj(ip).raw_fld.b1{1});
+%     if exist(fullfile(path, ['smuB1map_' name  ext]), 'file')
+%         disp('Existing B1 map found')
+%         allub1_img = {fullfile(path, ['muB1map_' name  ext]); fullfile(path, ['smuB1map_' name  ext])};
+%     else
+        disp('----- Calculation of B1 map -----');
+
+        V=spm_vol(P);
+        n   = numel(V);
+        Y_tmptmp   = zeros([V(1).dim(1:2) n]);
+        Y_ab = zeros(V(1).dim(1:3));
+        Y_cd = zeros(V(1).dim(1:3));
+        indexes=zeros(n/2,1);
+        Index_Matrix = zeros([V(1).dim(1:3) Nonominalvalues]);
+        real_Y_tmp   = zeros([V(1).dim(1:2) 2*Nonominalvalues]);
+        Y_tmp   = zeros([V(1).dim(1:2) 2*Nonominalvalues]);
+
+        Temp_matrix   = zeros([V(1).dim(1:3) n/2]);
+        Ssq_matrix = zeros(V(1).dim(1:3));
+
+        for i=1:n/2
+            Temp_matrix(:,:,:,i)=spm_read_vols(V(2*(i-1)+1));
         end
-        [~,indexes]=sort(Temp_mat,3);
-        for x_nr = 1:V(1).dim(1)
-            for y_nr = 1:V(1).dim(2)
-                for k=1:Nonominalvalues
-                    real_Y_tmp(x_nr,y_nr,2*k-1)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
-                    real_Y_tmp(x_nr,y_nr,2*k)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
-                    Index_Matrix(x_nr,y_nr,p,k)=indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
+        Ssq_matrix=sqrt(sum(Temp_matrix.^2,4));
+
+        %-Start progress plot
+        %-----------------------------------------------------------------------
+        spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
+
+        %-Loop over planes computing result Y
+        %-----------------------------------------------------------------------
+        clear Temp_mat;
+        corr_fact = exp(TM/T1);
+        for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
+            B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
+
+            for i = 1:n/2
+                M = inv(B*inv(V(1).mat)*V(1).mat);
+                Y_tmptmp(:,:,((i-1)*2+1))  = real(acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0)./(spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+eps))/pi*180/beta(i)); % nearest neighbor interpolation
+                Y_tmptmp(:,:,((i-1)*2+2))  = 180/beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
+                Temp_mat(:,:,i)=spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0);
+            end
+            [~,indexes]=sort(Temp_mat,3);
+            for x_nr = 1:V(1).dim(1)
+                for y_nr = 1:V(1).dim(2)
+                    for k=1:Nonominalvalues
+                        real_Y_tmp(x_nr,y_nr,2*k-1)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
+                        real_Y_tmp(x_nr,y_nr,2*k)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
+                        Index_Matrix(x_nr,y_nr,p,k)=indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
+                    end
                 end
             end
-        end
-        Y_tmp = sort(real(real_Y_tmp), 3); % take the real value due to noise problems
-        Y_sd   = zeros([V(1).dim(1:2) (Nonominalvalues+1)]);
-        Y_mn   = zeros([V(1).dim(1:2) (Nonominalvalues+1)]);
-        for i = 1:(Nonominalvalues+1)
-            Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i+Nonominalvalues-1)), [], 3);
-            Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i+Nonominalvalues-1)), 3);
-        end
-        [~,min_index] = min(Y_sd,[],3);%!!min_index is a 2D array. Size given by resolution along read and phase directions
-        for x_nr = 1:V(1).dim(1)
-            for y_nr = 1:V(1).dim(2)
-                Y_ab(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr));%Y_ab is the relative flip angle value averaged over the n flip angles (determined by minizing the SD i.e. keeping the most uniform relative flip angle values)
-                Y_cd(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr));%Y_cd is the corresponding standard deviation between the relative flip angle values
+            Y_tmp = sort(real(real_Y_tmp), 3); % take the real value due to noise problems
+            Y_sd   = zeros([V(1).dim(1:2) (Nonominalvalues+1)]);
+            Y_mn   = zeros([V(1).dim(1:2) (Nonominalvalues+1)]);
+            for i = 1:(Nonominalvalues+1)
+                Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i+Nonominalvalues-1)), [], 3);
+                Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i+Nonominalvalues-1)), 3);
             end
+            [~,min_index] = min(Y_sd,[],3);%!!min_index is a 2D array. Size given by resolution along read and phase directions
+            for x_nr = 1:V(1).dim(1)
+                for y_nr = 1:V(1).dim(2)
+                    Y_ab(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr));%Y_ab is the relative flip angle value averaged over the n flip angles (determined by minizing the SD i.e. keeping the most uniform relative flip angle values)
+                    Y_cd(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr));%Y_cd is the corresponding standard deviation between the relative flip angle values
+                end
+            end
+            spm_progress_bar('Set',p);
         end
-        spm_progress_bar('Set',p);
+
+        V_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
+        [p,name,e] = fileparts(V_save.fname);
+        P_B1 = fullfile(p,['B1map_' name e]);
+        V_save.fname = P_B1;
+        V_save = spm_write_vol(V_save,Y_ab*100);
+
+        W_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
+        [p,name,e] = fileparts(W_save.fname);
+        P_SDB1 = fullfile(p,['SDmap_' name e]);
+        W_save.fname = P_SDB1;
+        W_save = spm_write_vol(W_save,Y_cd*100);
+
+        % save workspace
+        X_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
+        [p,name,e] = fileparts(X_save.fname);
+        P_SsqMat = fullfile(p,['SumOfSq' e]);
+        X_save.fname = P_SsqMat;
+        X_save = spm_write_vol(X_save,Ssq_matrix);
+
+        pm_defaults;
+        pm_defs=pm_def;
+        pm_defs.SHORT_ECHO_TIME=10;
+        pm_defs.LONG_ECHO_TIME=12.46;
+        pm_defs.blipdir=1;
+        pm_defs.TOTAL_EPI_READOUT_TIME=540e-3*24;
+        pm_defs.MASKBRAIN=1;
+        pm_defs.STDTHRESH=5;
+        pm_defs.HZTHRESH=110;
+        pm_defs.ERODEB1=1;
+        pm_defs.PADB1=3 ;
+        pm_defs.B1FWHM=8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+        pm_defs.match_vdm=1;
+
+        mag1=spm_vol(Q(1,:));
+        mag=mag1.fname;
+        phase1=spm_vol(Q(3,:));
+        phase=phase1.fname;
+        scphase=FieldMap('Scale',phase);
+        fm_imgs=str2mat(scphase.fname,mag);
+
+        anat_img1=spm_vol(P_SsqMat);
+
+        [path,name,e] = fileparts(anat_img1.fname);
+        anat_img = {strcat(path,filesep,name,e)};
+        other_img{1}=char(V_save.fname);
+        other_img{2}=char(W_save.fname);
+
+        [fmap_img,unwarp_img] = B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+        uanat_img{1}=unwarp_img{1}.fname;
+        ub1_img{1}=unwarp_img{2}.fname;
+        ustd_img{1}=unwarp_img{3}.fname;
+        fpm_img{1}=fmap_img{1};
+        vdm_img{1}=fmap_img{2};
+        [allub1_img]=B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
     end
-    
-    V_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
-    [p,name,e] = fileparts(V_save.fname);
-    P_B1 = fullfile(p,['B1map_' name e]);
-    V_save.fname = P_B1;
-    V_save = spm_write_vol(V_save,Y_ab*100);
-    
-    W_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
-    [p,name,e] = fileparts(W_save.fname);
-    P_SDB1 = fullfile(p,['SDmap_' name e]);
-    W_save.fname = P_SDB1;
-    W_save = spm_write_vol(W_save,Y_cd*100);
-    
-    % save workspace
-    X_save=struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
-    [p,name,e] = fileparts(X_save.fname);
-    P_SsqMat = fullfile(p,['SumOfSq' e]);
-    X_save.fname = P_SsqMat;
-    X_save = spm_write_vol(X_save,Ssq_matrix);
-    
-    pm_defaults;
-    pm_defs=pm_def;
-    pm_defs.SHORT_ECHO_TIME=10;
-    pm_defs.LONG_ECHO_TIME=12.46;
-    pm_defs.blipdir=1;
-    pm_defs.TOTAL_EPI_READOUT_TIME=540e-3*24;
-    pm_defs.MASKBRAIN=1;
-    pm_defs.STDTHRESH=5;
-    pm_defs.HZTHRESH=110;
-    pm_defs.ERODEB1=1;
-    pm_defs.PADB1=3 ;
-    pm_defs.B1FWHM=8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-    pm_defs.match_vdm=1;
-    
-    mag1=spm_vol(Q(1,:));
-    mag=mag1.fname;
-    phase1=spm_vol(Q(3,:));
-    phase=phase1.fname;
-    scphase=FieldMap('Scale',phase);
-    fm_imgs=str2mat(scphase.fname,mag);
-    
-    anat_img1=spm_vol(P_SsqMat);
-    
-    [path,name,e] = fileparts(anat_img1.fname);
-    anat_img = {strcat(path,filesep,name,e)};
-    other_img{1}=char(V_save.fname);
-    other_img{2}=char(W_save.fname);
-    
-    [fmap_img,unwarp_img] = B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
-    uanat_img{1}=unwarp_img{1}.fname;
-    ub1_img{1}=unwarp_img{2}.fname;
-    ustd_img{1}=unwarp_img{3}.fname;
-    fpm_img{1}=fmap_img{1};
-    vdm_img{1}=fmap_img{2};
-    [allub1_img]=B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
     
     
     P_mtw    = char(job.subj(ip).raw_mpm.MT);
@@ -233,7 +239,7 @@ for ip=1:numel(job.subj)
     out_loc.subj(ip).A={fullfile(cwd,spm_str_manip(fA,'t'))};
     out_loc.subj(ip).T1w={fullfile(cwd,spm_str_manip(PT1w,'t'))};
 end
-end
+%end
 
 function p = hinfo(P)
 N = nifti(P);

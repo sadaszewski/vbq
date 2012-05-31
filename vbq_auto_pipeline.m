@@ -73,6 +73,10 @@ function job=vbq_auto_pipeline(job)
                         cd(P3);
                         % spm_dicom_convert(hdr, 'all', 'flat', 'nii');
                         status = local_dicom_convert(files);
+                        all_nii1 = dir('*.nii');
+                        for jj=1:numel(all_nii1)
+                            fix_origin(all_nii1(jj).name);
+                        end
                         cd(old_dir);
                         % for o=1:numel(hdr)
                         for o=1:numel(files)
@@ -118,10 +122,13 @@ function job=vbq_auto_pipeline(job)
         end
     end
     
-    function F = list_files_rec(D, num_dir)
+    function F = list_files_rec(D, num_dir) % , numeric_sort)
         if ~exist('num_dir', 'var')
             num_dir = Inf;
         end
+%         if ~exist('numeric_sort', 'var')
+%             numeric_sort = false;
+%         end
         cnt_dir = num_dir;
         F = {};
         if iscell(D) && numel(D)>1
@@ -132,16 +139,23 @@ function job=vbq_auto_pipeline(job)
         end
         D = char(D);
         x = dir(D);
-        [~, idx] = sort({x.name});
+        x=x(3:end);
+        ary = {x.name};
+        % if numeric_sort
+        for j=1:numel(ary)
+            ary{j} = str2double(ary{j});
+        end
+        % end
+        [~, idx] = sort(cell2mat(ary));
         x=x(idx);
         count = 0;
-        for j=3:numel(x)
+        for j=1:numel(x)
             if ~x(j).isdir
                 count = count + 1;
                 F{count,1} = fullfile(D, x(j).name); %#ok<AGROW>
             end
         end
-        for j=3:numel(x)
+        for j=1:numel(x)
             if x(j).isdir && cnt_dir>0
                 cnt_dir = cnt_dir - 1;
                 F = [F; list_files_rec(fullfile(D, x(j).name), num_dir)]; %#ok<AGROW>
@@ -213,7 +227,7 @@ function job=vbq_auto_pipeline(job)
         end
         all_nii = dir('*.nii');
         for j=1:numel(all_nii)
-            fix_origin(all_nii(j.name));
+            fix_origin(all_nii(j).name);
         end
         cd(oldwd);
     end
