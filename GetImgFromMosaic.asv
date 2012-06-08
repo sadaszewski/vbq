@@ -6,14 +6,24 @@ filename = '';
 DICOM_filename = getFirstDicomInfolder( ENCLOSING_path );
 NEchoes = 1;
 
-% Extract Dicom Header
-info_first = spm_dicom_headers(DICOM_filename);
-
-if ~isfield(info_first, 'CSAImageHeaderInfo')
-    error('CSAImageHeaderInfo tag is missing. Are you sure your scans are in MOSAIC format?');
+[~, ~, ext] = fileparts(DICOM_filename);
+if isempty(DICOM_filename) || strcmp(ext, '.nii')
+    % Ignore if no DICOM file or if Nifti is already there
+    return
 end
 
-if isempty(get_numaris4_val(info_first.CSAImageHeaderInfo, 'NumberOfImagesInMosaic'))
+% Extract Dicom Header
+disp(DICOM_filename);
+info_first = spm_dicom_headers(DICOM_filename);
+info_first = info_first{1};
+
+if ~isfield(info_first, 'CSAImageHeaderInfo')
+    % error('CSAImageHeaderInfo tag is missing. Are you sure your scans are in MOSAIC format?');
+    return
+end
+
+num_imag_in_mosaic = get_numaris4_val(info_first.CSAImageHeaderInfo, 'NumberOfImagesInMosaic');
+if isempty(num_imag_in_mosaic)
     % Not a real mosaic, it should be fine to leave it alone
     return
 end
@@ -32,7 +42,7 @@ if ~exist('dicomread', 'file')
 end
 
 fid = fopen(Header_textFile, 'w');
-fwrite(fid, phoenix.item(1).val);
+fwrite(fid, phoenix);
 fclose(fid);
 
 % Open Dicom header of the first Dicom image
@@ -44,6 +54,25 @@ TE=[];
 tline = fgetl(fid);
 p = 0;
 inc = 0;
+
+
+% Find number of slices
+%% ======================
+Found = 0;
+
+while ischar(tline) && ~Found
+    tline = fgetl(fid);
+    
+    k = strfind(tline, 'sKSpace.lImagesPerSlab');
+    if ~isempty(k)
+          NSlices = sscanf(tline, 'sKSpace.lImagesPerSlab = %i' );
+          Found = 1;
+    end
+end
+
+fseek(fid, 0, -1);
+tline = fgetl(fid);
+
 
 % Find number of Echoes
 %% ======================
@@ -79,12 +108,12 @@ end
 % Compute Number of Echoes per Row of the mosaic image
 %% ======================
 Num = sqrt(double(NEchoes));
-EchoPerRow = round(Num);
-H = info_first.Height/EchoPerRow; W = info_first.Width/EchoPerRow;
+EchoPerRow = round(Num+.49);
+H = info_first.Rows/EchoPerRow; W = info_first.Columns/EchoPerRow;
 
 D = dir( ENCLOSING_path );
-Path = fullfile(ENCLOSING_path, 'Echoes');
-mkdir(Path);
+Path = ENCLOSING_path; % fullfile(ENCLOSING_path, 'Echoes');
+% mkdir(Path);
 
 it = 1; % iterator to give consecutive numbers to each echo image
 
@@ -101,11 +130,15 @@ for j = 1:NEchoes
         filename = fullfile(ENCLOSING_path,D(i).name);
         I = dicomread(filename);
         info = dicominfo(filename);
-        info.InstanceNumber = it;
+        info.InstanceNumber =  info.InstanceNumber + (j-1)*NSlices;                                  %it;
         info.EchoTime = TE(j)*1e-3;
+        info.width = W; info.Height = H;
+        info.Rows = H; info.Columns = W;
+        info.WindowCenter = 0;
+        info.WindowWidth = 0;
         
         % Extract one echo image from th emosaic
-        X = mod((j-1)*W, EchoPerRow*W)+1; Y = floor(j/EchoPerRow)*H+1;
+        X = mod((j-1)*W, EchoPerRow*W)+1; Y = floor((j-1)/EchoPerRow)*H+1;
         I2 = imcrop(I,[X Y W-1 H-1]);
         
         % Write Dicom image corresponding to each echo
@@ -116,12 +149,33 @@ for j = 1:NEchoes
             );
         
         it = it + 1;
+        
+    end
+end
+
+for j = 1:NEchoes
+    for i = 3:length(D)
+        filename = fullfile(ENCLOSING_path,D(i).name);
+        delete(filename);
     end
 end
 
 function filename = getFirstDicomInfolder(path)
         x = dir(path);
-        filename = fullfile(path, x(3).name);
+        filename='';
+        for i=3:numel(x)
+            if x(i).isdir
+                continue
+            end
+            
+            [~, ~, ext] = fileparts(x(i).name);
+            
+            if strcmp(ext, '.nii') || strcmp(ext, '.txt')
+                continue
+            end
+            
+            filename = fullfile(path, x(i).name);
+        end
 
 function val = get_numaris4_val(str,name)
 name = deblank(name);

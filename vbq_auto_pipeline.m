@@ -2,57 +2,66 @@ function job=vbq_auto_pipeline(job)
     if ~isfield(job.auto_pipeline, 'auto_pipeline_yes')
         return
     end
-    
-    javaclasspath(fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar'));
 
-    D = char(job.auto_pipeline.auto_pipeline_yes.auto_pipeline_dir);
-    U = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_unpack;
-    H = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_hierarchy;
+    sInDir = char(job.auto_pipeline.auto_pipeline_yes.auto_pipeline_dir);
+    if sInDir(end) == '\'
+        sInDir = sInDir(1:end-1);
+    end
+    sOutDir = char(job.auto_pipeline.auto_pipeline_yes.auto_pipeline_odir);
+    if sOutDir(end) == '\'
+        sOutDir = sOutDir(1:end-1);
+    end
+    % bUnpack = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_unpack;
+    bCreateHierarchy = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_hierarchy;
     
-    if U
-        files = list_files_rec(D);
-        for i=1:numel(files)
-            if ~isempty(regexp(files{i}, '.tar$', 'match'))
-                untar(files{i}, fileparts(files{i}));
-                delete(files{i});
+    if exist(fullfile(sOutDir, 'progress.mat'), 'file')
+        progress = load(fullfile(sOutDir, 'progress.mat'));
+    else
+        progress = struct('stage', 1);
+    end
+    
+%     if bUnpack && progress.stage <= 1
+%         files = list_files_rec(sInDir);
+%         for i=1:numel(files)
+%             if ~isempty(regexp(files{i}, '.tar$', 'match'))
+%                 untar(files{i}, fileparts(files{i}));
+%                 delete(files{i});
+%             end
+%         end
+%     end
+    
+    if bCreateHierarchy && progress.stage <= 2
+        if progress.stage < 2
+            progress.stage = 2;
+            files = list_files_rec(sInDir);
+            f = fopen(fullfile(sOutDir, 'vbq_files.txt'), 'wt');
+            for i = 1:numel(files)
+                fwrite(f, sprintf('%s\n', files{i}));
             end
+            fclose(f);
+            save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
         end
+
+        cmd1 = ['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber_SeriesDescription -outdir "' sOutDir '" -files "' fullfile(sOutDir, 'vbq_files.txt') '" -nc -sv'];
+        disp(cmd1);
+        system(cmd1);
     end
     
-    if H
-        files = list_files_rec(D);
-        f = fopen(fullfile(D, 'vbq_files.txt'), 'w');
-        for i=1:numel(files)
-            fwrite(f, [files{i} '\n']);
-        end
-        fclose(f);
-        args = {};
-        args{1} = fullfile(spm('dir'), 'toolbox', 'vbq', 'attr.txt');
-        args{2} = fullfile(spm('dir'), 'toolbox', 'vbq', 'hier.txt');
-        args{3} = D(1:end-1);
-        args{4} = '1';
-        args{5} = fullfile(D, 'vbq_files.txt');
-        % anon = ch.chuv.dicomymizer.Anonymizer();
-        % anon.main(args);
-        system(['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesDescription -outdir "' args{3} '" -removeOriginals -files "' args{5} '"']);
-        % hdr = spm_dicom_headers(char(files), 1);
-        % cd(D);
-        % spm_dicom_convert(hdr, 'all', 'patid_date', 'nii');
-        % for i=1:numel(hdr)
-            % spm_unlink(hdr{i}.Filename)
-        % end
-        
-        remove_empty_dir(D);
-    end
+    progress.stage = 3; %#ok<STRNU>
+    save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
+    vbq_cleanup(sOutDir); % remove results from previous run
     
     subj_count = 0;
     subj_orig = job.subj(1);
-    pat = dir(D);
+    pat = dir(sOutDir);
     for i=3:numel(pat)
+        if ~pat(i).isdir
+            continue
+        end
         subj = subj_orig;
-        stud = dir(fullfile(D, pat(i).name));
+        stud = dir(fullfile(sOutDir, pat(i).name));
         for k=3:numel(stud)
-            P = fullfile(D, pat(i).name, stud(k).name);
+            P = fullfile(sOutDir, pat(i).name, stud(k).name);
             seq = dir(P);
             
             for m=3:numel(seq)
@@ -63,28 +72,30 @@ function job=vbq_auto_pipeline(job)
                     
                     mosaic_result = '';
                     if job.auto_pipeline.auto_pipeline_yes.auto_pipeline_mosaic
-                        mosaic_result = process_mosaic(P3);
+                        mosaic_result = process_mosaic(sOutDir, P3);
                     end
                             
                     if isempty(mosaic_result)
-                        % hdr = spm_dicom_headers(char(list_files_rec(P3)), 1);
-                        files = list_files_rec(P3);
                         old_dir = pwd;
                         cd(P3);
-                        % spm_dicom_convert(hdr, 'all', 'flat', 'nii');
-                        status = local_dicom_convert(files);
-                        all_nii1 = dir('*.nii');
-                        for jj=1:numel(all_nii1)
-                            fix_origin(all_nii1(jj).name);
+                        status = local_dicom_convert(P3);
+                        if status ~= 0
+                            error(['Problem converting DICOM to Nifti : ' num2str(status)]);
                         end
-                        cd(old_dir);
-                        % for o=1:numel(hdr)
-                        for o=1:numel(files)
-                            % delete(hdr{o}.Filename);
-                            if (status{o} == 0) % Converted OK
-                                delete(files{o});
+                        all_files = dir();
+                        for jj=3:numel(all_files)
+                            [~, name, ext] = fileparts(all_files(jj).name);
+                            if strcmp(ext, '.nii')
+                                if local_is_input_file(all_files(jj).name)
+                                    continue
+                                end
+                                fix_origin(all_files(jj).name);
+                                movefile(all_files(jj).name, ['in_' name '_in' ext]);
+                            else
+                                delete(all_files(jj).name);
                             end
                         end
+                        cd(old_dir);
                     end
                 end
             end
@@ -115,151 +126,194 @@ function job=vbq_auto_pipeline(job)
             disp(['Missing images for ' pat(i).name]);
         end
     end
-    
-    function check_count(name, list, expected)
-        if numel(list) ~= expected
-            error([num2str(numel(list)) ' instead of expected ' num2str(expected) ' in ' name]);
-        end
-    end
-    
-    function F = list_files_rec(D, num_dir) % , numeric_sort)
-        if ~exist('num_dir', 'var')
-            num_dir = Inf;
-        end
-%         if ~exist('numeric_sort', 'var')
-%             numeric_sort = false;
-%         end
-        cnt_dir = num_dir;
-        F = {};
-        if iscell(D) && numel(D)>1
-            for j=1:numel(D)
-                F = [F; list_files_rec(D{j}, num_dir)]; %#ok<AGROW>
-            end
-            return
-        end
-        D = char(D);
-        x = dir(D);
-        x=x(3:end);
-        ary = {x.name};
-        % if numeric_sort
-        for j=1:numel(ary)
-            ary{j} = str2double(ary{j});
-        end
-        % end
-        [~, idx] = sort(cell2mat(ary));
-        x=x(idx);
-        count = 0;
-        for j=1:numel(x)
-            if ~x(j).isdir
-                count = count + 1;
-                F{count,1} = fullfile(D, x(j).name); %#ok<AGROW>
-            end
-        end
-        for j=1:numel(x)
-            if x(j).isdir && cnt_dir>0
-                cnt_dir = cnt_dir - 1;
-                F = [F; list_files_rec(fullfile(D, x(j).name), num_dir)]; %#ok<AGROW>
-            end
-        end
-    end
+end
 
-    function remove_empty_dir(D)
-        D = char(D);
-        x = dir(D);
-        for j=3:numel(x)
-            if x(j).isdir
-                remove_empty_dir(fullfile(D, x(j).name));
+function check_count(name, list, expected)
+    if numel(list) ~= expected
+        error([num2str(numel(list)) ' instead of expected ' num2str(expected) ' in ' name]);
+    end
+end
+
+function F = list_files_rec(D, num_dir)
+    if ~exist('num_dir', 'var')
+        num_dir = Inf;
+    end
+    cnt_dir = num_dir;
+    F = {};
+    if iscell(D) && numel(D)>1
+        for j=1:numel(D)
+            F = [F; list_files_rec(D{j}, num_dir)]; %#ok<AGROW>
+        end
+        return
+    end
+    D = char(D);
+    x = dir(D);
+    x=x(3:end);
+    ary = {x.name};
+    for j=1:numel(ary)
+        ary{j} = sscanf(ary{j}, '%f', 1);
+        if isempty(ary{j})
+            ary{j} = 1;
+        end
+    end
+    [~, idx] = sort(cell2mat(ary));
+    x=x(idx);
+    count = 0;
+    for j=1:numel(x)
+        if ~x(j).isdir
+            count = count + 1;
+            F{count,1} = fullfile(D, x(j).name); %#ok<AGROW>
+        end
+    end
+    for j=1:numel(x)
+        if x(j).isdir && cnt_dir>0
+            cnt_dir = cnt_dir - 1;
+            F = [F; list_files_rec(fullfile(D, x(j).name), num_dir)]; %#ok<AGROW>
+        end
+    end
+end
+
+function remove_empty_dir(D)
+    D = char(D);
+    x = dir(D);
+    for j=3:numel(x)
+        if x(j).isdir
+            remove_empty_dir(fullfile(D, x(j).name));
+        end
+    end
+    try
+        rmdir(D)
+    catch e %#ok<NASGU>
+        % leave alone non-empty directories
+    end
+end
+
+function S = find_str(A, R)
+    R = char(R);
+    S = {};
+    count = 0;
+    for j=1:numel(A)
+        if ~isempty(regexp(A{j}, R, 'match'))
+            count = count + 1;
+            S{count} = A{j}; %#ok<AGROW>
+        end
+    end
+    S=sort(S);
+    if ~isempty(S)
+        S=S{1};
+    else
+        S='null';
+    end
+end
+
+function M = multi_fullfile(P, F)
+    M = {};
+    if ~iscell(F)
+        F = {F};
+    end
+    for j=1:numel(F)
+        M{j} = fullfile(P, F{j}); %#ok<AGROW>
+    end
+end
+
+function res = process_mosaic(sOutDir, path)
+    res = GetImgFromMosaic(sOutDir, path);
+    x=dir(fullfile(path, 'Echo*'));
+    oldwd = pwd;
+    cd(path);
+    for j=1:size(x,1)
+        p = fullfile(path, x(j).name);
+        status1 = local_dicom_convert(p);
+        if status1 ~= 0
+            error('Problem converting DICOM to Nifti');
+        end
+        y = dir(p);
+        for k=1:numel(y)
+            [~,~,ext] = fileparts(y(k).name);
+            if ~strcmp(ext, '.nii') % Delete Dicoms
+                delete(fullfile(p, y(k).name));
             end
         end
-        try
-            rmdir(D)
-        catch e %#ok<NASGU>
-            % leave alone non-empty directories
+        remove_empty_dir(p);
+    end
+    all_nii = dir('*.nii');
+    for j=1:numel(all_nii)
+        if local_is_input_file(all_nii(j).name)
+            continue
+        end
+        fix_origin(all_nii(j).name);
+        [~, name, ext] = fileparts(all_nii(j).name);
+        movefile(all_nii(j).name, ['in_' name '_in' ext]);
+    end
+    cd(oldwd);
+end
+
+function status = local_dicom_convert(dir_name)
+    old_dir = pwd();
+    cd(dir_name);
+    x = dir();
+    files = {};
+    for i=3:numel(x)
+        [~,~,ext] = fileparts(x(i).name);
+        if ~strcmp(ext, '.nii') && ~x(i).isdir
+            files{end+1} = x(i).name; %#ok<AGROW>
         end
     end
+    hdr = spm_dicom_headers(char(files), true);
+    cd(old_dir);
+    out = spm_dicom_convert(hdr, 'all', 'flat', 'nii');
+    if numel(out.files) > 0
+        status = 0;
+    else
+        status = 1;
+    end
+end
 
-    function S = find_str(A, R)
-        R = char(R);
-        S = {};
-        count = 0;
-        for j=1:numel(A)
-            if ~isempty(regexp(A{j}, R, 'match'))
-                count = count + 1;
-                S{count} = A{j}; %#ok<AGROW>
-            end
-        end
-        S=sort(S);
-        if ~isempty(S)
-            S=S{1};
-        else
-            S='null';
+function status = local_dicom_convert2(dir_name)
+    cpu = computer;
+    if strcmp(cpu, 'PCWIN') || strcmp(cpu, 'PCWIN64')
+        exename = 'dcm2nii';
+    elseif strcmp(cpu, 'GLNX86')
+        exename = 'dcm2nii.glnx86';
+    elseif strcmp(cpu, 'GLNXA64')
+        exename = 'dcm2nii.glnxa64';
+    else
+        error('dcm2nii : unsupported architecture');
+    end
+    x = dir(dir_name);
+    all_nii = true;
+    for i=3:numel(x)
+        [~,~,ext] = fileparts(x(i).name);
+        if ~strcmp(ext, '.nii')
+            all_nii = false;
+            break;
         end
     end
-
-    function M = multi_fullfile(P, F)
-        M = {};
-        if ~iscell(F)
-            F = {F};
-        end
-        for j=1:numel(F)
-            M{j} = fullfile(P, F{j}); %#ok<AGROW>
-        end
+    if all_nii
+        disp(['Only Nifti files found. Not doing conversion for ' dir_name]);
+        status = 0;
+        return
     end
+    exename = fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', exename);
+    cmd = [exename ' -b "' fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', 'dcm2nii.ini') '" -o . -g N "' dir_name '"'];
+    status = system(cmd);
+end
 
-    function res = process_mosaic(path)
-        res = GetImgFromMosaic(path);
-        x=dir(fullfile(path, 'Echo*'));
-        oldwd = pwd;
-        cd(path);
-        for j=1:size(x,1)
-    	    p = fullfile(path, x(j).name);
-            y = dir(p);
-            % hdrs = spm_dicom_headers([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
-            % spm_dicom_convert(hdrs, 'all', 'flat', 'nii');
-            files1 = cellstr([repmat([p '/'], numel(y)-2, 1) char(y(3:end).name)]);
-            status1 = local_dicom_convert(files1);
-            for o1=1:numel(files1)
-                % delete(hdrs{o1}.Filename);
-                if (status1{o1} == 0) % Converted successfully
-                    delete(files1{o1}.Filename);
-                end
-            end
-        end
-        all_nii = dir('*.nii');
-        for j=1:numel(all_nii)
-            fix_origin(all_nii(j).name);
-        end
-        cd(oldwd);
-    end
+function fix_origin(file)
+    image2set_hdr=spm_vol(file);
+    orig_mat = spm_get_space(file);
+    real_pos1 = orig_mat * [image2set_hdr.dim/2 1]';
+    mat = spm_matrix([-real_pos1(1), -real_pos1(2), -real_pos1(3), 0, 0, 0, 1, 1, 1]);
+    spm_get_space(file, mat * orig_mat);
+end
 
-    function status = local_dicom_convert(filenames)
-        cpu = computer;
-        if strcmp(cpu, 'PCWIN')
-            exename = 'dcm2nii';
-        elseif strcmp(cpu, 'GLNX86')
-            exename = 'dcm2nii.glnx86';
-        elseif strcmp(cpu, 'GLNXA64')
-            exename = 'dcm2nii.glnxa64';
-        else
-            error('dcm2nii : unsupported architecture');
+function ret = local_is_input_file(fname)
+    ret = false;
+    [~,name,ext] = fileparts(fname);
+    if strcmp(ext, '.nii')
+        idx = strfind(name, 'in_');
+        if ~isempty(idx) && idx == 1 && ~isempty(strfind(fname, '_in.nii'))
+            ret = true;
         end
-        exename = fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', exename);
-        status = cell(numel(filenames),1);
-        for i1=1:numel(filenames)
-            if isdicom(filenames{i1})
-                cmd = [exename ' -o . "' filenames{i1} '"'];
-                status{i1} = system(cmd);
-            else
-                status{i1} = 1;
-            end
-        end
-    end
-
-    function fix_origin(file)
-        image2set_hdr=spm_vol(file);
-        orig_mat = spm_get_space(file);
-        real_pos1 = orig_mat * [image2set_hdr.dim/2 1]';
-        mat = spm_matrix([-real_pos1(1), -real_pos1(2), -real_pos1(3), 0, 0, 0, 1, 1, 1]);
-        spm_get_space(file, mat * orig_mat);
     end
 end

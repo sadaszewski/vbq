@@ -1,6 +1,6 @@
-function filename = GetImgFromMosaic( ENCLOSING_path )
+function filename = GetImgFromMosaic( sOutDir, ENCLOSING_path )
 
-Header_textFile = fullfile('GetImgFromMosaic_header_dump.txt');
+Header_textFile = fullfile(sOutDir, 'GetImgFromMosaic_header_dump.txt');
 
 filename = '';
 DICOM_filename = getFirstDicomInfolder( ENCLOSING_path );
@@ -113,7 +113,7 @@ H = info_first.Rows/EchoPerRow; W = info_first.Columns/EchoPerRow;
 
 D = dir( ENCLOSING_path );
 Path = ENCLOSING_path; % fullfile(ENCLOSING_path, 'Echoes');
-mkdir(Path);
+% mkdir(Path);
 
 it = 1; % iterator to give consecutive numbers to each echo image
 
@@ -153,11 +153,9 @@ for j = 1:NEchoes
     end
 end
 
-for j = 1:NEchoes
-    for i = 3:length(D)
-        filename = fullfile(ENCLOSING_path,D(i).name);
-        delete(filename);
-    end
+for i = 3:length(D)
+    filename = fullfile(ENCLOSING_path,D(i).name);
+    delete(filename);
 end
 
 function filename = getFirstDicomInfolder(path)

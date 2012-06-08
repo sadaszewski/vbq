@@ -44,13 +44,13 @@ auto_pipeline_odir.num     = [1 1];
 % ---------------------------------------------------------------------
 % auto_pipeline_yes Automatic Pipeline Number of Subjects
 % ---------------------------------------------------------------------
-auto_pipeline_nsubj = cfg_entry;
-auto_pipeline_nsubj.tag = 'auto_pipeline_nsubj';
-auto_pipeline_nsubj.name = 'Number of subjects';
-auto_pipeline_nsubj.help = {'If you know the number of subjects in advance you can put it here in order to be able to use dependencies. Subjects will be processed in alphabetical order of PatientName tags.'};
-auto_pipeline_nsubj.strtype = 'n';
-auto_pipeline_nsubj.num = [1 1];
-auto_pipeline_nsubj.val = {1};
+auto_pipeline_nsubj         = cfg_files;
+auto_pipeline_odir.tag     = 'auto_pipeline_odir';
+auto_pipeline_odir.name    = 'Pipeline output directory';
+auto_pipeline_odir.help    = {'Select a directory for automatic pipeline output.'};
+auto_pipeline_odir.filter = 'dir';
+auto_pipeline_odir.ufilter = '.*';
+auto_pipeline_odir.num     = [1 1];
 % ---------------------------------------------------------------------
 % auto_pipeline_unpack Automatic Pipeline Setup Unpack
 % ---------------------------------------------------------------------
@@ -156,7 +156,7 @@ auto_pipeline_yes = cfg_branch;
 auto_pipeline_yes.tag = 'auto_pipeline_yes';
 auto_pipeline_yes.name = 'Yes';
 auto_pipeline_yes.help = {'Use automatic pipeline.'};
-auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_odir auto_pipeline_nsubj auto_pipeline_hierarchy auto_pipeline_mosaic auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
+auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_hierarchy auto_pipeline_mosaic auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
 % ---------------------------------------------------------------------
 % auto_pipeline Automatic Pipeline Setup
 % ---------------------------------------------------------------------
