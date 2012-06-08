@@ -228,7 +228,7 @@ function res = process_mosaic(sOutDir, path)
             error('Problem converting DICOM to Nifti');
         end
         y = dir(p);
-        for k=1:numel(y)
+        for k=3:numel(y)
             [~,~,ext] = fileparts(y(k).name);
             if ~strcmp(ext, '.nii') % Delete Dicoms
                 delete(fullfile(p, y(k).name));
