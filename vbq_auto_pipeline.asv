@@ -66,6 +66,10 @@ function job=vbq_auto_pipeline(job)
             
             for m=3:numel(seq)
                 P2 = fullfile(P, seq(m).name);
+                if ~should_convert(job, seq(m).name)
+                    disp(['Skipping ' P2 ' ...']);
+                    continue
+                end
                 ser = dir(P2);
                 for n=3:numel(ser)
                     P3 = fullfile(P2, ser(n).name);
@@ -132,6 +136,21 @@ function check_count(name, list, expected)
     if numel(list) ~= expected
         error([num2str(numel(list)) ' instead of expected ' num2str(expected) ' in ' name]);
     end
+end
+
+function x = num_sort_dir(x)
+    x=x(3:end);
+    ary = zeros(numel(x),1);
+    for i=1:numel(x)
+        tmp = sscanf(x(i).name, '%f', 1);
+        if isempty(tmp)
+            ary(i) = 1;
+        else
+            ary(i) = tmp;
+        end
+    end
+    [~, idx] = sort(ary);
+    x = x(idx);
 end
 
 function F = list_files_rec(D, num_dir)
@@ -305,6 +324,18 @@ function fix_origin(file)
     real_pos1 = orig_mat * [image2set_hdr.dim/2 1]';
     mat = spm_matrix([-real_pos1(1), -real_pos1(2), -real_pos1(3), 0, 0, 0, 1, 1, 1]);
     spm_get_space(file, mat * orig_mat);
+end
+
+function ret = should_convert(job, protocol_name)
+    ret = false;
+    if ~isempty(regexp(protocol_name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_mt, 'match')) || ...
+       ~isempty(regexp(protocol_name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_pd, 'match')) || ...
+       ~isempty(regexp(protocol_name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_t1, 'match')) || ...
+       (isfield(job.subj(1), 'raw_fld') && ...
+        (~isempty(regexp(protocol_name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b1, 'match')) || ...
+         ~isempty(regexp(protocol_name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0, 'match'))))
+       ret = true;
+    end
 end
 
 function ret = local_is_input_file(fname)
