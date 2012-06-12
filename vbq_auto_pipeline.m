@@ -72,7 +72,12 @@ function job=vbq_auto_pipeline(job)
                 end
                 ser = dir(P2);
                 ser = num_sort_dir(ser);
-                for n=1:1 % Convert just first series, the one we will use for VBQ
+                if ~isempty(regexp(ser(1).name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0, 'match'))
+                    N = numel(ser);
+                else
+                    N = 1;
+                end
+                for n=1:N % Convert just first series, the one we will use for VBQ
                     P3 = fullfile(P2, ser(n).name);
                     
                     mosaic_result = '';
