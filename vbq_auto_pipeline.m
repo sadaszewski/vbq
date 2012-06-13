@@ -11,7 +11,7 @@ function job=vbq_auto_pipeline(job)
     if sOutDir(end) == '\'
         sOutDir = sOutDir(1:end-1);
     end
-    % bUnpack = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_unpack;
+    bUnpack = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_unpack;
     bCreateHierarchy = job.auto_pipeline.auto_pipeline_yes.auto_pipeline_hierarchy;
     
     if exist(fullfile(sOutDir, 'progress.mat'), 'file')
