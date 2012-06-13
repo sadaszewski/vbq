@@ -57,7 +57,7 @@ auto_pipeline_nsubj.val = {1};
 auto_pipeline_unpack         = cfg_menu;
 auto_pipeline_unpack.tag     = 'auto_pipeline_unpack';
 auto_pipeline_unpack.name    = 'Unpack .tar archives';
-auto_pipeline_unpack.help    = {'If Yes is selected, .tar archives will be unpacked and deleted prior to listing DICOM files.'};
+auto_pipeline_unpack.help    = {'If Yes is selected, .tar archives will be unpacked and deleted prior to listing DICOM files. Warning: THIS HAPPENS IN-PLACE!'};
 auto_pipeline_unpack.labels  = {
                 'Yes'
                 'No'
@@ -156,7 +156,7 @@ auto_pipeline_yes = cfg_branch;
 auto_pipeline_yes.tag = 'auto_pipeline_yes';
 auto_pipeline_yes.name = 'Yes';
 auto_pipeline_yes.help = {'Use automatic pipeline.'};
-auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_odir auto_pipeline_nsubj auto_pipeline_hierarchy auto_pipeline_mosaic auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
+auto_pipeline_yes.val = {auto_pipeline_dir auto_pipeline_unpack auto_pipeline_odir auto_pipeline_nsubj auto_pipeline_hierarchy auto_pipeline_mosaic auto_pipeline_mt auto_pipeline_pd auto_pipeline_t1 auto_pipeline_b0 auto_pipeline_b1};
 % ---------------------------------------------------------------------
 % auto_pipeline Automatic Pipeline Setup
 % ---------------------------------------------------------------------

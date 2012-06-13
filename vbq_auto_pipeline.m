@@ -20,15 +20,15 @@ function job=vbq_auto_pipeline(job)
         progress = struct('stage', 1);
     end
     
-%     if bUnpack && progress.stage <= 1
-%         files = list_files_rec(sInDir);
-%         for i=1:numel(files)
-%             if ~isempty(regexp(files{i}, '.tar$', 'match'))
-%                 untar(files{i}, fileparts(files{i}));
-%                 delete(files{i});
-%             end
-%         end
-%     end
+    if bUnpack && progress.stage <= 1
+        files = list_files_rec(sInDir);
+        for i=1:numel(files)
+            if ~isempty(regexp(files{i}, '.tar$', 'match'))
+                untar(files{i}, fileparts(files{i}));
+                delete(files{i});
+            end
+        end
+    end
     
     if bCreateHierarchy && progress.stage <= 2
         if progress.stage < 2
