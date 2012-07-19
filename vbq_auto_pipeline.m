@@ -349,7 +349,7 @@ function ret = local_is_input_file(fname)
     [~,name,ext] = fileparts(fname);
     if strcmp(ext, '.nii')
         idx = strfind(name, 'in_');
-        if ~isempty(idx) && idx == 1 && ~isempty(strfind(fname, '_in.nii'))
+        if ~isempty(idx) && idx(1) == 1 && ~isempty(strfind(fname, '_in.nii'))
             ret = true;
         end
     end
