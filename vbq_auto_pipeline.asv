@@ -31,21 +31,18 @@ function job=vbq_auto_pipeline(job)
     end
     
     if bCreateHierarchy && progress.stage <= 2
-%         if progress.stage < 2
-%             progress.stage = 2;
-%             files = list_files_rec(sInDir);
-%             f = fopen(fullfile(sOutDir, 'vbq_files.txt'), 'wt');
-%             for i = 1:numel(files)
-%                 fwrite(f, sprintf('%s\n', files{i}));
-%             end
-%             fclose(f);
-%             save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
-%         end
-        
-        progress.stage = 2;
-        save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
+        if progress.stage < 2
+            progress.stage = 2;
+            files = list_files_rec(sInDir);
+            f = fopen(fullfile(sOutDir, 'vbq_files.txt'), 'wt');
+            for i = 1:numel(files)
+                fwrite(f, sprintf('%s\n', files{i}));
+            end
+            fclose(f);
+            save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
+        end
 
-        cmd1 = ['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber_SeriesDescription -outdir "' sOutDir '" -indir "' sInDir '" -nc -sv'];
+        cmd1 = ['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber_SeriesDescription -outdir "' sOutDir '" -files "' fullfile(sOutDir, 'vbq_files.txt') '" -nc -sv'];
         disp(cmd1);
         system(cmd1);
     end
@@ -119,17 +116,11 @@ function job=vbq_auto_pipeline(job)
             subj.raw_mpm.PD = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_pd)), 1);
             subj.raw_mpm.T1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_t1)), 1);
             
-            finished = false;
-            for ii=1:numel(subj.raw_mpm.MT)
-                if strcmp(subj.raw_mpm.MT{ii}, '_finished_')
-                    finished = true;
+            for i=1:numel(subj.raw_mpm.MT)
+                if strcmp(subj.raw_mpm.MT{i}, '_finished_')
+                    disp(['Skipping ' pat(i).name ' : maps have already been computed.']);
                     break;
                 end
-            end
-            
-            if finished
-                disp(['Skipping ' pat(i).name ' : maps have already been computed.']);
-                break;
             end
             
             check_count('MT', subj.raw_mpm.MT, 6);

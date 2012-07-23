@@ -238,6 +238,9 @@ for ip=1:numel(job.subj)
     out_loc.subj(ip).MT={fullfile(cwd,spm_str_manip(fMT,'t'))};
     out_loc.subj(ip).A={fullfile(cwd,spm_str_manip(fA,'t'))};
     out_loc.subj(ip).T1w={fullfile(cwd,spm_str_manip(PT1w,'t'))};
+    
+    f = fopen(fullfile(cwd, '_finished_'));
+    fclose(f);
 end
 %end
 
