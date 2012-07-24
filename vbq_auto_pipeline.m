@@ -132,9 +132,9 @@ function job=vbq_auto_pipeline(job)
                 break;
             end
             
-            check_count('MT', subj.raw_mpm.MT, 6);
+            check_count('MT', subj.raw_mpm.MT, [6 8]);
             check_count('PD', subj.raw_mpm.PD, 8);
-            check_count('T1', subj.raw_mpm.T1, 6);
+            check_count('T1', subj.raw_mpm.T1, [6 8]);
             
             if isfield(subj, 'raw_fld')
                 subj.raw_fld.b1 = list_files_rec(multi_fullfile(P, find_str(seq_names, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b1)));
@@ -155,8 +155,12 @@ function job=vbq_auto_pipeline(job)
 end
 
 function check_count(name, list, expected)
-    if numel(list) ~= expected
-        error([num2str(numel(list)) ' instead of expected ' num2str(expected) ' in ' name]);
+    if numel(expected) == 1
+        expected(2) = expected(1);
+    end
+    n = numel(list);
+    if n < expected(1) || n > expected(2)
+        error([num2str(n) ' instead of expected ' num2str(expected(1)) ' - ' num2str(expected(2)) ' in ' name]);
     end
 end
 
