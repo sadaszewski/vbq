@@ -75,7 +75,7 @@ function job=vbq_auto_pipeline(job)
                 end
                 ser = dir(P2);
                 ser = num_sort_dir(ser);
-                if ~isempty(regexp(ser(1).name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0, 'match'))
+                if ~isempty(regexp(seq(m).name, job.auto_pipeline.auto_pipeline_yes.auto_pipeline_b0, 'match'))
                     N = numel(ser);
                 else
                     N = 1;
