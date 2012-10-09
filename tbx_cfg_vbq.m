@@ -1525,7 +1525,7 @@ nrm.tag   = 'mni_norm';
 nrm.name  = 'Normalise to MNI Space';
 nrm.val   = {multsdata, template, vox, bb, fwhm };
 nrm.prog  = @spm_dartel_norm_fun_local;
-%nrm.vout  = @vout_norm_fun;
+nrm.vout  = @vout_norm_fun;
 % nrm.check = @check_norm_fun;
 nrm.help  = {[...
 'The procedure transforms the Gaussian smoothing kernel, which is',...
@@ -1837,8 +1837,8 @@ for i=1:numel(job.multsdata.multsdata_gm)
        job.subjd(i).flowfield = {};
        job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
        job.subjd(i).mp_vols = {};
-       for j=1:numel(job.multsdata.multsdata_f)
-           job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f(j).multsdata_f1{i};
+       for j=1:numel(job.multsdata.multsdata_f1)
+           job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f1{j}{i};
        end
 end
 
@@ -1893,6 +1893,11 @@ for nm=1:length(job.subjd)
 %         end
     end
 end
+
+
+function dep=vout_norm_fun(job)
+    dep = cfg_dep;
+
 %======================================================================
 function fout=insert_pref(f,p)
 fout=strcat(spm_str_manip(f,'h'),filesep,p,spm_str_manip(f,'t'));
