@@ -1795,28 +1795,29 @@ for nm=1:length(job.subjd)
             error(chk)
         end
         p=spm_str_manip(job.subjd(nm).mp_vols{1},'h');
-        c1=insert_pref(job.subjd(nm).images{1},'mw');   % removed s
-        c2=insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',1'];
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',2'];
-        m_c = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',6'];
-        f =insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
+        c1=insert_pref(job.subjd(nm).images{1},'smw');   % removed s
+        c2=insert_pref(job.subjd(nm).images{2},'smw');  % removed s
+        f =insert_pref(job.subjd(nm).mp_vols{i},'sw');  % removed s
+        c =spm_imcalc_ui(strvcat(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',1'];
+        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',2'];
+        m_c = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',6'];
         p1= spm_imcalc_ui(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)');
         p2= spm_imcalc_ui(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)');
-        p = spm_imcalc_ui(strvcat(char(p1),char(p2)),insert_pref(f,'p_'),'(i1+i2)');
+        p = spm_imcalc_ui(strvcat(char(c),char(f),m_c),insert_pref(f,'p_'),'(i1.*i2).*((1-i3)>0.05)');
         m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
         m2=insert_pref(c2,'s');spm_smooth(c2,m2,job.fwhm);
-        m=insert_pref(m_c,'s');spm_smooth(m_c,m,job.fwhm);
+        m=insert_pref(c,'s');spm_smooth(c,m,job.fwhm);
         n1=insert_pref(p1,'s');spm_smooth(p1,n1,job.fwhm);
         n2=insert_pref(p2,'s');spm_smooth(p2,n2,job.fwhm);
         n=insert_pref(p,'s');spm_smooth(p,n,job.fwhm);
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_dart_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_dart_'),'(i1./i2).*(i3>0.05)');
-        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(p,'fin_uni_'),'(i1./i2).*((1-i3)>0.05)');
-        delfiles=strrep({p1,p2,m1,m2,n1,n2,p,m,n},'.nii,1','.nii');
-	for ii=1:numel(delfiles)
-            delete(delfiles{ii});
-        end
+        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(p,'fin_uni_'),'(i1./i2).*((i3)>0.05)');
+        % delfiles=strrep({p1,p2,m1,m2,n1,n2,p,m,n},'.nii,1','.nii');
+% 	for ii=1:numel(delfiles)
+%             delete(delfiles{ii});
+%         end
     end
 end
 %======================================================================
