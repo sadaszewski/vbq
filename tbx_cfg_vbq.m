@@ -1461,12 +1461,69 @@ sdatad.help      = {'Specify the number of subjects.'};
 sdatad.values    = {subjd };
 sdatad.num       = [1 Inf];
 % ---------------------------------------------------------------------
+% multsdata_gm GM Images
+% ---------------------------------------------------------------------
+multsdata_gm         = cfg_files;
+multsdata_gm.tag     = 'multsdata_gm';
+multsdata_gm.name    = 'GM Volumes';
+multsdata_gm.help    = {'Select GM volumes.'}; 
+multsdata_gm.filter  = 'image';
+multsdata_gm.ufilter = '.*';
+multsdata_gm.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_wm WM Images
+% ---------------------------------------------------------------------
+multsdata_wm         = cfg_files;
+multsdata_wm.tag     = 'multsdata_wm';
+multsdata_wm.name    = 'WM Volumes';
+multsdata_wm.help    = {'Select WM volumes.'}; 
+multsdata_wm.filter  = 'image';
+multsdata_wm.ufilter = '.*';
+multsdata_wm.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_f1 Multi-parameter maps
+% ---------------------------------------------------------------------
+multsdata_f1         = cfg_files;
+multsdata_f1.tag     = 'multsdata_f1';
+multsdata_f1.name    = 'Map';
+multsdata_f1.help    = {'Select multi-parameter maps.'}; 
+multsdata_f1.filter  = 'image';
+multsdata_f1.ufilter = '.*';
+multsdata_f1.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_f1 Multi-parameter maps
+% ---------------------------------------------------------------------
+multsdata_f         = cfg_repeat;
+multsdata_f.tag     = 'multsdata_f';
+multsdata_f.name    = 'Multi-parameter maps';
+multsdata_f.val = { multsdata_f1 };
+multsdata_f.help    = {'Select multi-parameter maps.'}; 
+multsdata_f.values = { multsdata_f1 };
+multsdata_f.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_u Deformation fields
+% ---------------------------------------------------------------------
+multsdata_u         = cfg_files;
+multsdata_u.tag     = 'multsdata_u';
+multsdata_u.name    = 'Deformation fields';
+multsdata_u.help    = {'Deformation fields.'}; 
+multsdata_u.filter  = 'image';
+multsdata_u.ufilter = '.*';
+multsdata_u.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata Data
+% ---------------------------------------------------------------------
+multsdata = cfg_branch;
+multsdata.tag = 'multsdata';
+multsdata.name = 'Data';
+multsdata.val = {multsdata_gm multsdata_wm multsdata_f multsdata_u};
+% ---------------------------------------------------------------------
 %
 % ---------------------------------------------------------------------
 nrm       = cfg_exbranch;
 nrm.tag   = 'mni_norm';
 nrm.name  = 'Normalise to MNI Space';
-nrm.val   = {sdatad, template, vox, bb, fwhm };
+nrm.val   = {multsdata, template, vox, bb, fwhm };
 nrm.prog  = @spm_dartel_norm_fun_local;
 %nrm.vout  = @vout_norm_fun;
 % nrm.check = @check_norm_fun;
@@ -1772,7 +1829,23 @@ end
 dep = fdep;
 %_______________________________________________________________________
 
+function job=perimage_to_persubject(job)
+for i=1:numel(job.multsdata.multsdata_gm)
+       job.subjd(i).images = {};
+       job.subjd(i).images{1} = job.multsdata.multsdata_gm{i};
+       job.subjd(i).images{2} = job.multsdata.multsdata_wm{i};
+       job.subjd(i).flowfield = {};
+       job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
+       job.subjd(i).mp_vols = {};
+       for j=1:numel(job.multsdata.multsdata_f)
+           job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f(j).multsdata_f1{i};
+       end
+end
+
 function varargout = spm_dartel_norm_fun_local(job)
+
+job = perimage_to_persubject(job);
+
 feds.template = job.template;
 feds.vox      = job.vox;
 feds.bb       = job.bb;
