@@ -1886,7 +1886,7 @@ for nm=1:length(job.subjd)
         n=insert_pref(p,'s');spm_smooth(p,n,job.fwhm);
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_dart_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_dart_'),'(i1./i2).*(i3>0.05)');
-        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(p,'fin_uni_'),'(i1./i2).*((i3)>0.05)');
+        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(p,'fin_dart_'),'(i1./i2).*((i3)>0.05)');
         % delfiles=strrep({p1,p2,m1,m2,n1,n2,p,m,n},'.nii,1','.nii');
 % 	for ii=1:numel(delfiles)
 %             delete(delfiles{ii});
