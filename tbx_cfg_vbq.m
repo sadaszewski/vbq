@@ -1461,14 +1461,71 @@ sdatad.help      = {'Specify the number of subjects.'};
 sdatad.values    = {subjd };
 sdatad.num       = [1 Inf];
 % ---------------------------------------------------------------------
+% multsdata_gm GM Images
+% ---------------------------------------------------------------------
+multsdata_gm         = cfg_files;
+multsdata_gm.tag     = 'multsdata_gm';
+multsdata_gm.name    = 'GM Volumes';
+multsdata_gm.help    = {'Select GM volumes.'}; 
+multsdata_gm.filter  = 'image';
+multsdata_gm.ufilter = '.*';
+multsdata_gm.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_wm WM Images
+% ---------------------------------------------------------------------
+multsdata_wm         = cfg_files;
+multsdata_wm.tag     = 'multsdata_wm';
+multsdata_wm.name    = 'WM Volumes';
+multsdata_wm.help    = {'Select WM volumes.'}; 
+multsdata_wm.filter  = 'image';
+multsdata_wm.ufilter = '.*';
+multsdata_wm.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_f1 Multi-parameter maps
+% ---------------------------------------------------------------------
+multsdata_f1         = cfg_files;
+multsdata_f1.tag     = 'multsdata_f1';
+multsdata_f1.name    = 'Map';
+multsdata_f1.help    = {'Select multi-parameter maps.'}; 
+multsdata_f1.filter  = 'image';
+multsdata_f1.ufilter = '.*';
+multsdata_f1.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_f1 Multi-parameter maps
+% ---------------------------------------------------------------------
+multsdata_f         = cfg_repeat;
+multsdata_f.tag     = 'multsdata_f';
+multsdata_f.name    = 'Multi-parameter maps';
+multsdata_f.val = { multsdata_f1 };
+multsdata_f.help    = {'Select multi-parameter maps.'}; 
+multsdata_f.values = { multsdata_f1 };
+multsdata_f.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata_u Deformation fields
+% ---------------------------------------------------------------------
+multsdata_u         = cfg_files;
+multsdata_u.tag     = 'multsdata_u';
+multsdata_u.name    = 'Deformation fields';
+multsdata_u.help    = {'Deformation fields.'}; 
+multsdata_u.filter  = 'image';
+multsdata_u.ufilter = '.*';
+multsdata_u.num     = [1 Inf];
+% ---------------------------------------------------------------------
+% multsdata Data
+% ---------------------------------------------------------------------
+multsdata = cfg_branch;
+multsdata.tag = 'multsdata';
+multsdata.name = 'Data';
+multsdata.val = {multsdata_gm multsdata_wm multsdata_f multsdata_u};
+% ---------------------------------------------------------------------
 %
 % ---------------------------------------------------------------------
 nrm       = cfg_exbranch;
 nrm.tag   = 'mni_norm';
 nrm.name  = 'Normalise to MNI Space';
-nrm.val   = {sdatad, template, vox, bb, fwhm };
+nrm.val   = {multsdata, template, vox, bb, fwhm };
 nrm.prog  = @spm_dartel_norm_fun_local;
-%nrm.vout  = @vout_norm_fun;
+nrm.vout  = @vout_norm_fun;
 % nrm.check = @check_norm_fun;
 nrm.help  = {[...
 'The procedure transforms the Gaussian smoothing kernel, which is',...
@@ -1545,21 +1602,27 @@ for nm=1:length(job.subjc)
         end
         c1=insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1');
         c2=insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2');
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',1'];
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',2'];
-        f=outdef.warped{i};
+        f =insert_pref(job.subjc(nm).maps.mp_vols{i},'w');  % removed s f=outdef.warped{i};
+        c =spm_imcalc_ui(strvcat(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',1'];
+        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',2'];
+        m_c = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',6'];
         p1= spm_imcalc_ui(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)');
         p2= spm_imcalc_ui(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)');
+        pp = spm_imcalc_ui(strvcat(char(c),char(f),m_c),insert_pref(f,'p_'),'(i1.*i2).*((1-i3)>0.05)');
         m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
         m2=insert_pref(c2,'s');spm_smooth(c2,m2,job.fwhm);
+        m=insert_pref(c,'s');spm_smooth(c,m,job.fwhm);
         n1=insert_pref(p1,'s');spm_smooth(p1,n1,job.fwhm);
         n2=insert_pref(p2,'s');spm_smooth(p2,n2,job.fwhm);
+        n=insert_pref(pp,'s');spm_smooth(pp,n,job.fwhm);
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_uni_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_uni_'),'(i1./i2).*(i3>0.05)');
-        delfiles=strrep({p1,p2,m1,m2,n1,n2},'.nii,1','.nii');
+        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(pp,'fin_uni_bb_'),'(i1./i2).*((i3)>0.05)');
+        delfiles=strrep({p1,p2,m1,m2,n1,n2,pp,m(1:(end-2)),n},'.nii,1','.nii');
         for ii=1:numel(delfiles)
     	    delete(delfiles{ii});
-    	end
+        end
     end
     
 end
@@ -1767,7 +1830,23 @@ end
 dep = fdep;
 %_______________________________________________________________________
 
+function job=perimage_to_persubject(job)
+for i=1:numel(job.multsdata.multsdata_gm)
+       job.subjd(i).images = {};
+       job.subjd(i).images{1} = job.multsdata.multsdata_gm{i};
+       job.subjd(i).images{2} = job.multsdata.multsdata_wm{i};
+       job.subjd(i).flowfield = {};
+       job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
+       job.subjd(i).mp_vols = {};
+       for j=1:numel(job.multsdata.multsdata_f1)
+           job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f1{j}{i};
+       end
+end
+
 function varargout = spm_dartel_norm_fun_local(job)
+
+job = perimage_to_persubject(job);
+
 feds.template = job.template;
 feds.vox      = job.vox;
 feds.bb       = job.bb;
@@ -1790,25 +1869,36 @@ for nm=1:length(job.subjd)
             error(chk)
         end
         p=spm_str_manip(job.subjd(nm).mp_vols{1},'h');
-        c1=insert_pref(job.subjd(nm).images{1},'mw');   % removed s
-        c2=insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',1'];
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'TPM.nii') ',2'];
-        f =insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
+        c1=insert_pref(job.subjd(nm).images{1},'smw');   % removed s
+        c2=insert_pref(job.subjd(nm).images{2},'smw');  % removed s
+        f =insert_pref(job.subjd(nm).mp_vols{i},'sw');  % removed s
+        c =spm_imcalc_ui(strvcat(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',1'];
+        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',2'];
+        m_c = [spm_select('FPList',fullfile(spm('Dir'),'toolbox','Seg'),'^TPM.nii') ',6'];
         p1= spm_imcalc_ui(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)');
         p2= spm_imcalc_ui(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)');
+        pp = spm_imcalc_ui(strvcat(char(c),char(f),m_c),insert_pref(f,'p_'),'(i1.*i2).*((1-i3)>0.05)');
         m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
         m2=insert_pref(c2,'s');spm_smooth(c2,m2,job.fwhm);
+        m=insert_pref(c,'s');spm_smooth(c,m,job.fwhm);
         n1=insert_pref(p1,'s');spm_smooth(p1,n1,job.fwhm);
         n2=insert_pref(p2,'s');spm_smooth(p2,n2,job.fwhm);
+        n=insert_pref(pp,'s');spm_smooth(pp,n,job.fwhm);
         q1 = spm_imcalc_ui(strvcat(n1,m1,m1),insert_pref(p1,'fin_dart_'),'(i1./i2).*(i3>0.05)');
         q2 = spm_imcalc_ui(strvcat(n2,m2,m2),insert_pref(p2,'fin_dart_'),'(i1./i2).*(i3>0.05)');
-        delfiles=strrep({p1,p2,m1,m2,n1,n2},'.nii,1','.nii');
+        q = spm_imcalc_ui(strvcat(n,m,m),insert_pref(pp,'fin_dart_bb_'),'(i1./i2).*((i3)>0.05)');
+        delfiles=strrep({p1,p2,m1,m2,n1,n2,pp,m,n},'.nii,1','.nii');
 	for ii=1:numel(delfiles)
             delete(delfiles{ii});
         end
     end
 end
+
+
+function dep=vout_norm_fun(job)
+    dep = cfg_dep;
+
 %======================================================================
 function fout=insert_pref(f,p)
 fout=strcat(spm_str_manip(f,'h'),filesep,p,spm_str_manip(f,'t'));
