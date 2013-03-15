@@ -192,7 +192,7 @@ end
     out.subj(ip).A={fullfile(cwd,spm_str_manip(fA,'t'))};
     out.subj(ip).T1w={fullfile(cwd,spm_str_manip(PT1w,'t'))};
     
-    f = fopen(fullfile(cwd, '_finished_'));
+    f = fopen(fullfile(cwd, '_finished_'), 'wb');
     fclose(f);
     
 end
