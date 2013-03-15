@@ -332,21 +332,24 @@ for p=1:dm(3),
     
     % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
     MT       = ( (A_forMT * fa_mtw - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw * fa_mtw / 2 ) * 100;
-    if (~isempty(f_T))
-        MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
-    end
-    if flatAmap%The two outer voxels in all directions are nulled in order to remove artefactual effects from the MT map
-        MTforA=MT;
-        if (p==1)||(p==2)||(p==dm(3))||(p==dm(3)-1)
-            MTforA=zeros(size(MT,1),size(MT,2));
-        else
-            MTforA(1,:)=0;MTforA(2,:)=0;MTforA(end-1,:)=0;MTforA(end,:)=0;
-            MTforA(:,1)=0;MTforA(:,2)=0;MTforA(:,end-1)=0;MTforA(:,end)=0;
-        end
-        tmp      = MTforA;
-        Nmap(7).dat(:,:,p) = max(min(tmp,50),-50);
-        spm_progress_bar('Set',p);
-    end
+    
+    % commented lines below avoid mt correction for b1
+    
+%     if (~isempty(f_T))                                    
+%         MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+%     end
+%     if flatAmap%The two outer voxels in all directions are nulled in order to remove artefactual effects from the MT map
+%         MTforA=MT;
+%         if (p==1)||(p==2)||(p==dm(3))||(p==dm(3)-1)
+%             MTforA=zeros(size(MT,1),size(MT,2));
+%         else
+%             MTforA(1,:)=0;MTforA(2,:)=0;MTforA(end-1,:)=0;MTforA(end,:)=0;
+%             MTforA(:,1)=0;MTforA(:,2)=0;MTforA(:,end-1)=0;MTforA(:,end)=0;
+%         end
+%         tmp      = MTforA;
+%         Nmap(7).dat(:,:,p) = max(min(tmp,50),-50);
+%         spm_progress_bar('Set',p);
+%     end
     
     tmp      = MT;
     Nmap(3).dat(:,:,p) = max(min(tmp,5),-5);
